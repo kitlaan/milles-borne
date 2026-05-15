@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import type { Card, CardType } from '../cards';
 import { legalActions } from '../legal';
 import { IllegalActionError, reduce } from '../reducer';
-import { defaultRules } from '../rules';
+import { coreRule } from '../rules/core';
+import { coupFourreRule } from '../rules/coup-fourre';
 import { computeScores } from '../score';
 import type { GameState, Seat } from '../state';
 
@@ -42,7 +43,10 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
   return { ...base, ...overrides };
 }
 
-const rules = defaultRules();
+// Use a minimal rule set so score assertions focus on coup-fourré mechanics
+// (the +300 bonus from coup-fourre rule + the +100 from core's per-safety)
+// without scoring contributions from the bundled hand-end bonus rule.
+const rules = [coreRule, coupFourreRule];
 
 describe('Coup-Fourré', () => {
   it('opens an interrupt window when victim holds matching safety', () => {

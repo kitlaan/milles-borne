@@ -6,13 +6,11 @@
 // start a new game (or leave the page).
 
 import { computed } from 'vue';
-import { defaultRules } from '@/engine/rules';
 import { computeScores } from '@/engine/score';
 import { useGameStore } from '@/ui/stores/game';
 import Modal from './Modal.vue';
 
 const store = useGameStore();
-const rules = defaultRules();
 
 const open = computed(() => store.phase === 'ended');
 
@@ -24,7 +22,9 @@ const winnerLabel = computed(() => {
   return `${store.configFor(w)?.displayName ?? `Seat ${w}`} wins`;
 });
 
-const scores = computed(() => (store.state ? computeScores(store.state, rules) : []));
+const scores = computed(() =>
+  store.state ? computeScores(store.state, store.activeRules) : [],
+);
 
 async function newGame(): Promise<void> {
   await store.newGame();

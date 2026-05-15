@@ -3,17 +3,16 @@
 // "river" row alongside the deck and discard.
 
 import { computed } from 'vue';
-import { defaultRules } from '@/engine/rules';
 import { computeScores } from '@/engine/score';
 import type { GameState } from '@/engine/state';
+import { useGameStore } from '@/ui/stores/game';
 
 const props = defineProps<{
   state: GameState;
 }>();
 
-const rules = defaultRules();
-
-const scores = computed(() => computeScores(props.state, rules));
+const store = useGameStore();
+const scores = computed(() => computeScores(props.state, store.activeRules));
 </script>
 
 <template>

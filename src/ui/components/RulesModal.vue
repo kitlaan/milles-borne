@@ -3,7 +3,6 @@
 // summary, the active rule plugins, and the active AI configs.
 
 import { computed } from 'vue';
-import { defaultRules } from '@/engine/rules';
 import { useGameStore } from '@/ui/stores/game';
 import Modal from './Modal.vue';
 
@@ -11,14 +10,15 @@ defineProps<{ open: boolean }>();
 defineEmits<{ (e: 'close'): void }>();
 
 const store = useGameStore();
-const rules = defaultRules();
 
 const ruleNotes: Readonly<Record<string, string>> = {
   core: 'Core Mille Bornes mechanics: dealing, draw/play/discard, battle/speed pile resolution, distance scoring (1pt/km), per-safety score (100pt), 1000-km target.',
   'coup-fourre': 'If a hazard is played against you and you hold the matching safety, you may interrupt to cancel the hazard and earn +300 at hand-end.',
+  'standard-bonuses': 'Standard hand-end bonuses: Trip Completed (400), Delayed Action (300, deck exhausted), Safe Trip (300, no 200-mile cards), Shut-Out (500, every opponent at 0 km).',
+  'memory-mode': 'House rule: the discard pile cannot be inspected — only the top card is visible. Tests memory of which hazards / remedies have been played.',
 };
 
-const activeRules = computed(() => rules);
+const activeRules = computed(() => store.activeRules);
 const playerConfigs = computed(() => store.playerConfigs);
 </script>
 

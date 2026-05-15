@@ -21,7 +21,6 @@
 import { watchEffect, type Ref } from 'vue';
 import { dumbAI } from '@/ai/dumb';
 import { legalActions } from '@/engine/legal';
-import { defaultRules } from '@/engine/rules';
 import type { useGameStore } from '@/ui/stores/game';
 
 type Store = ReturnType<typeof useGameStore>;
@@ -41,7 +40,6 @@ export function useTurnDriver(
   running: Ref<boolean>,
   pacing: TurnDriverPacing = DEFAULT_PACING,
 ): void {
-  const rules = defaultRules();
   let inFlight = false;
 
   function tryAdvance(): void {
@@ -79,7 +77,7 @@ export function useTurnDriver(
           if (!store.state) return;
           const view = store.viewFor(seat);
           if (!view) return;
-          const legal = legalActions(store.state, seat, rules);
+          const legal = legalActions(store.state, seat, store.activeRules);
           if (legal.length === 0) return;
           const action = await dumbAI.play(view, legal);
           await store.dispatch(action);

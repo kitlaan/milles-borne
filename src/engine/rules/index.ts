@@ -8,6 +8,8 @@
 
 import { coreRule } from './core';
 import { coupFourreRule } from './coup-fourre';
+import { memoryModeRule } from './memory-mode';
+import { standardBonusesRule } from './standard-bonuses';
 import type { RulePlugin } from './types';
 
 export * from './types';
@@ -15,7 +17,19 @@ export * from './types';
 export const RULE_LIBRARY: Readonly<Record<string, RulePlugin>> = Object.freeze({
   [coreRule.id]: coreRule,
   [coupFourreRule.id]: coupFourreRule,
+  [standardBonusesRule.id]: standardBonusesRule,
+  [memoryModeRule.id]: memoryModeRule,
 });
+
+// Rules that always run — required for the game to function correctly.
+export const CORE_RULE_IDS: ReadonlyArray<string> = Object.freeze([coreRule.id]);
+
+// Rules a player can opt in / out of via settings.
+export const OPTIONAL_RULE_IDS: ReadonlyArray<string> = Object.freeze([
+  coupFourreRule.id,
+  standardBonusesRule.id,
+  memoryModeRule.id,
+]);
 
 export function rulesFromIds(ids: ReadonlyArray<string>): RulePlugin[] {
   return ids.map((id) => {
@@ -25,8 +39,10 @@ export function rulesFromIds(ids: ReadonlyArray<string>): RulePlugin[] {
   });
 }
 
+// Default new-game rule set. Includes core + the optional rules that are
+// on by default for a faithful Mille Bornes experience.
 export function defaultRules(): RulePlugin[] {
-  return [coreRule, coupFourreRule];
+  return [coreRule, coupFourreRule, standardBonusesRule];
 }
 
 export function listAvailableRules(): ReadonlyArray<{ id: string; version: string }> {

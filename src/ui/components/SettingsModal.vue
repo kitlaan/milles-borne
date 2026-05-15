@@ -2,7 +2,8 @@
 // Settings drawer. Phase 4a ships theme + card-back pickers. Rules /
 // ruleset / AI selectors slot in here in later phases.
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { OPTIONAL_RULE_IDS, RULE_LIBRARY } from '@/engine/rules';
 import { useSettings, type ColorMode } from '@/ui/composables/useSettings';
 import { themeRegistry } from '@/ui/themes';
 import Modal from './Modal.vue';
@@ -11,9 +12,26 @@ import ThemeShower from './ThemeShower.vue';
 defineProps<{ open: boolean }>();
 defineEmits<{ (e: 'close'): void }>();
 
-const { settings, setTheme, setCardBack, setColorMode } = useSettings();
+const { settings, setTheme, setCardBack, setColorMode, toggleRule } = useSettings();
 const themes = themeRegistry();
 const showerOpen = ref(false);
+
+const optionalRules = computed(() =>
+  OPTIONAL_RULE_IDS.map((id) => {
+    const rule = RULE_LIBRARY[id];
+    return {
+      id,
+      version: rule?.version ?? '?',
+      enabled: settings.value.enabledRuleIds.includes(id),
+    };
+  }),
+);
+
+const RULE_LABELS: Readonly<Record<string, string>> = {
+  'coup-fourre': 'Coup-Fourré',
+  'standard-bonuses': 'Hand-end bonuses',
+  'memory-mode': 'Memory Mode',
+};
 
 function onThemeChange(e: Event): void {
   const v = (e.target as HTMLSelectElement).value;
@@ -86,6 +104,21 @@ function onColorModeChange(e: Event): void {
         <option value="dark">Dark</option>
       </select>
     </section>
+
+    <section class="rules-section">
+      <header class="rules-section__head">
+        <span class="label">Optional rules</span>
+        <span class="muted">Applies to new games</span>
+      </header>
+      <label v-for="r in optionalRules" :key="r.id" class="rule-row">
+        <input
+          type="checkbox"
+          :checked="r.enabled"
+          @change="toggleRule(r.id)"
+        >
+        <span>{{ RULE_LABELS[r.id] ?? r.id }}</span>
+      </label>
+    </section>
   </Modal>
   <ThemeShower :open="showerOpen" @close="showerOpen = false" />
 </template>
@@ -132,4 +165,28 @@ function onColorModeChange(e: Event): void {
 }
 .icon-btn:hover { background: var(--hover); }
 .icon-btn svg { display: block; }
+
+.rules-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rules-section__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.rules-section__head .muted {
+  font-size: var(--font-label);
+  color: var(--muted);
+  font-style: italic;
+}
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-body);
+  cursor: pointer;
+}
+.rule-row input { cursor: pointer; }
 </style>

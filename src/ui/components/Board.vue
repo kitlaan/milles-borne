@@ -14,7 +14,6 @@
 import { computed, ref } from 'vue';
 import type { Action } from '@/engine/actions';
 import { legalActions } from '@/engine/legal';
-import { defaultRules } from '@/engine/rules';
 import { useGameStore } from '@/ui/stores/game';
 import CoupFourreModal from './CoupFourreModal.vue';
 import EndOverlay from './EndOverlay.vue';
@@ -25,14 +24,13 @@ import ScorePanel from './ScorePanel.vue';
 import Tableau from './Tableau.vue';
 
 const store = useGameStore();
-const rules = defaultRules();
 
 const targetingCardId = ref<string | null>(null);
 
 const legalForHuman = computed<Action[]>(() => {
   if (!store.state) return [];
   if (store.actingSeat !== store.humanSeat) return [];
-  return legalActions(store.state, store.humanSeat, rules);
+  return legalActions(store.state, store.humanSeat, store.activeRules);
 });
 
 // All card ids in hand for which any PLAY action is legal (regardless of
@@ -142,7 +140,16 @@ async function discardSelected(): Promise<void> {
         label="Deck"
         empty="—"
       />
-      <Pile :cards="store.state.discard" label="Discard" empty="—" />
+      <!-- Memory-mode rule (if active) suppresses the inspector AND
+           collapses the peek stack to a single top card so neither the
+           most recent N nor the full pile is browsable. -->
+      <Pile
+        :cards="store.state.discard"
+        :inspectable="!store.hasRule('memory-mode')"
+        :visible-stack="store.hasRule('memory-mode') ? 1 : 3"
+        label="Discard"
+        empty="—"
+      />
     </section>
 
 

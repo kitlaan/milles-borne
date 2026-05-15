@@ -12,12 +12,10 @@
 import { computed } from 'vue';
 import type { Action } from '@/engine/actions';
 import { legalActions } from '@/engine/legal';
-import { defaultRules } from '@/engine/rules';
 import { useGameStore } from '@/ui/stores/game';
 import Modal from './Modal.vue';
 
 const store = useGameStore();
-const rules = defaultRules();
 
 const open = computed(
   () =>
@@ -40,7 +38,7 @@ const attackerName = computed(() => {
 
 const legal = computed<Action[]>(() => {
   if (!store.state || !open.value) return [];
-  return legalActions(store.state, store.humanSeat, rules);
+  return legalActions(store.state, store.humanSeat, store.activeRules);
 });
 
 const safetyChoices = computed(() =>

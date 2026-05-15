@@ -200,6 +200,11 @@ describe('Battle pile clearing chain', () => {
 
 describe('All-safeties scoring', () => {
   it('credits 100 per safety + CF bonuses correctly', () => {
+    // Use a minimal rule set so the per-safety (core) + per-CF (coup-fourre)
+    // scoring is tested in isolation, without the bundled hand-end bonuses.
+    const minimalRules = rules.filter(
+      (r) => r.id === 'core' || r.id === 'coup-fourre',
+    );
     const safeties: SafetyEntry[] = [
       { card: makeCard('safety-right-of-way'), coupFourre: false },
       { card: makeCard('safety-driving-ace'), coupFourre: true },
@@ -218,7 +223,7 @@ describe('All-safeties scoring', () => {
         blankSeat(1),
       ],
     });
-    const scores = computeScores(state, rules);
+    const scores = computeScores(state, minimalRules);
     const s0 = scores.find((s) => s.seat === 0)!;
     // 4 safeties × 100 + 2 coup-fourrés × 300 = 1000
     expect(s0.total).toBe(4 * 100 + 2 * 300);
