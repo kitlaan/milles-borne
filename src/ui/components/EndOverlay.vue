@@ -47,7 +47,7 @@ async function newGame(): Promise<void> {
       </header>
       <ul>
         <li v-for="(entry, i) in s.breakdown" :key="i">
-          <span>+{{ entry.points }}</span>
+          <span class="pts">+{{ entry.points }}</span>
           <span class="muted">{{ entry.reason }}</span>
         </li>
       </ul>
@@ -76,8 +76,14 @@ async function newGame(): Promise<void> {
   font-size: 13px;
 }
 .score-block li {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 10px;
+  align-items: baseline;
+}
+.score-block .pts {
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, monospace;
 }
 .muted { color: var(--muted); }
 .primary {
