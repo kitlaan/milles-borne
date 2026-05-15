@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+  <rect x="4" y="4" width="192" height="272" rx="14" fill="var(--card-bg)" stroke="var(--color-hazard)" stroke-width="4"/>
+  <g transform="translate(100,118)">
+    <!-- Impact starburst -->
+    <polygon points="0,-62 12,-22 56,-22 22,4 36,46 0,20 -36,46 -22,4 -56,-22 -12,-22" fill="var(--color-hazard)" stroke="var(--card-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <text x="0" y="6" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="800" font-size="22" fill="#fff" letter-spacing="0.04em">!</text>
+  </g>
+  <text x="100" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="14" fill="var(--card-fg)" letter-spacing="0.05em">ACCIDENT</text>
+  <text x="100" y="254" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="var(--card-fg)" opacity="0.55" letter-spacing="0.08em">HAZARD</text>
+</svg>

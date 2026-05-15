@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" preserveAspectRatio="xMidYMid meet">
+  <defs>
+    <pattern id="cls-road" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="40" height="40" fill="var(--card-back-a)"/>
+      <rect x="0" y="14" width="40" height="6" fill="var(--card-back-b)"/>
+    </pattern>
+  </defs>
+  <!-- Outer frame -->
+  <rect x="4" y="4" width="192" height="272" rx="14" fill="url(#cls-road)" stroke="var(--card-back-frame)" stroke-width="4"/>
+  <!-- Inset emblem -->
+  <g transform="translate(100,140)">
+    <circle r="58" fill="var(--card-back-a)" stroke="var(--card-back-frame)" stroke-width="4"/>
+    <text x="0" y="-2" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="700" font-size="46" fill="var(--card-back-fg)" letter-spacing="0.04em">MB</text>
+    <text x="0" y="28" text-anchor="middle" font-family="system-ui, sans-serif" font-size="10" fill="var(--card-back-fg)" opacity="0.7" letter-spacing="0.2em">1000</text>
+  </g>
+</svg>

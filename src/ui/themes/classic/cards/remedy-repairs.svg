@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280">
+  <rect x="4" y="4" width="192" height="272" rx="14" fill="var(--card-bg)" stroke="var(--color-remedy)" stroke-width="4"/>
+  <g transform="translate(100,118) rotate(-35)">
+    <!-- Open-end wrench: clearly readable shape. Two "C"-shaped jaws at
+         opposite ends of a long shaft. -->
+    <!-- Shaft -->
+    <rect x="-12" y="-32" width="24" height="64" fill="var(--color-remedy)" stroke="var(--card-fg)" stroke-width="2"/>
+    <!-- Top jaw (open-end) -->
+    <path d="
+      M -22,-58
+      L 22,-58
+      L 22,-32
+      L 12,-32
+      L 12,-44
+      L -12,-44
+      L -12,-32
+      L -22,-32
+      Z"
+      fill="var(--color-remedy)" stroke="var(--card-fg)" stroke-width="2" stroke-linejoin="round"/>
+    <!-- Bottom jaw (open-end), rotated 90° via mirrored path -->
+    <path d="
+      M -22,58
+      L 22,58
+      L 22,32
+      L 12,32
+      L 12,44
+      L -12,44
+      L -12,32
+      L -22,32
+      Z"
+      fill="var(--color-remedy)" stroke="var(--card-fg)" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+  <text x="100" y="220" text-anchor="middle" font-family="system-ui, sans-serif" font-weight="700" font-size="16" fill="var(--card-fg)" letter-spacing="0.05em">REPAIRS</text>
+  <text x="100" y="254" text-anchor="middle" font-family="system-ui, sans-serif" font-size="11" fill="var(--card-fg)" opacity="0.55" letter-spacing="0.08em">REMEDY</text>
+</svg>
