@@ -8,9 +8,11 @@ export default defineConfig({
     },
   },
   define: {
-    // CLI / test runs don't go through Vite's bundler-time define for browser code,
-    // but Vitest also needs __GIT_COMMIT__ resolved for engine modules that reference it.
+    // CLI / test runs don't go through Vite's bundler-time define for browser
+    // code, but Vitest still needs these constants resolved for modules that
+    // reference them.
     __GIT_COMMIT__: JSON.stringify('test'),
+    __ENGINE_VERSION__: JSON.stringify('test'),
   },
   test: {
     environment: 'node',

@@ -6,6 +6,17 @@ export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
   ...vue.configs['flat/recommended'],
+  // Tell vue-eslint-parser to use the TS parser for <script lang="ts">.
+  {
+    files: ['**/*.vue'],
+    languageOptions: {
+      parserOptions: {
+        parser: tseslint.parser,
+        extraFileExtensions: ['.vue'],
+        sourceType: 'module',
+      },
+    },
+  },
   {
     files: ['src/**/*.ts', 'src/**/*.vue'],
     languageOptions: {
@@ -13,10 +24,16 @@ export default tseslint.config(
       sourceType: 'module',
       globals: {
         __GIT_COMMIT__: 'readonly',
+        __ENGINE_VERSION__: 'readonly',
       },
     },
     rules: {
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      // Style nits we don't care about for this project.
+      'vue/multi-word-component-names': 'off',
+      'vue/max-attributes-per-line': 'off',
+      'vue/singleline-html-element-content-newline': 'off',
+      'vue/html-self-closing': 'off',
     },
   },
   // Engine purity guard: forbid impure globals and UI/build-tool imports

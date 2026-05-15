@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import vue from '@vitejs/plugin-vue';
 import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, URL } from 'node:url';
 
 // `<short-hash>` or `<short-hash>-dirty` when the working tree has any
@@ -33,5 +34,11 @@ export default defineConfig({
   },
   define: {
     __GIT_COMMIT__: JSON.stringify(readGitCommit()),
+    __ENGINE_VERSION__: JSON.stringify(readEngineVersion()),
   },
 });
+
+function readEngineVersion(): string {
+  const pkg = JSON.parse(readFileSync('./package.json', 'utf8')) as { version?: string };
+  return pkg.version ?? '0.0.0';
+}
