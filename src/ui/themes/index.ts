@@ -3,16 +3,17 @@
 // Order in `ALL_THEMES` is the order users see in the picker. The first
 // entry is the default theme used when no setting is persisted.
 
-import { bootstrapTheme } from './bootstrap';
 import { classicTheme } from './classic';
+import { minimalTheme } from './minimal';
 import type { Theme, ThemeId, ThemeRegistryEntry } from './types';
 
 export * from './types';
 
+// Order in this array is the order users see in the picker. The first
+// entry is the default theme used when no setting is persisted.
 export const ALL_THEMES: ReadonlyArray<Theme> = Object.freeze([
   classicTheme,
-  bootstrapTheme,
-  // Real themes land here in phase 4b/4c.
+  minimalTheme,
 ]);
 
 export const DEFAULT_THEME_ID: ThemeId = classicTheme.id;
