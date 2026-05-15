@@ -3,9 +3,9 @@
 // dismiss header. Consumers focus on content (default slot) and supply
 // their own h2 / close logic when they want non-standard headers.
 //
-// Z-index is configurable because we have a hierarchy of overlays
-// (coup-fourré > end > inspector > rules) so an overlay opened mid-game
-// stacks correctly above any pre-existing one.
+// Z-index is a CSS value — defaults to `var(--z-modal)`; specific overlays
+// pass another `var(--z-*)` token from base.css. The hierarchy
+// (coup-fourré > end > preview > inspector > modal) lives in base.css.
 
 withDefaults(
   defineProps<{
@@ -16,15 +16,15 @@ withDefaults(
     dismissible?: boolean;
     /** Click on the backdrop closes the modal. Default true. */
     closeOnBackdrop?: boolean;
-    /** Override z-index; defaults to 80. */
-    zIndex?: number;
+    /** CSS z-index value. Pass e.g. 'var(--z-interrupt)'. */
+    zIndex?: string;
     /** Override max-width on the panel. */
     maxWidth?: string;
   }>(),
   {
     dismissible: true,
     closeOnBackdrop: true,
-    zIndex: 80,
+    zIndex: 'var(--z-modal)',
     title: undefined,
     maxWidth: undefined,
   },
@@ -61,18 +61,18 @@ defineEmits<{ (e: 'close'): void }>();
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: var(--backdrop);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: var(--pad-modal-edge);
   overflow: auto;
 }
 .modal {
-  background: #1e1e1e;
-  border: 1px solid #444;
-  border-radius: 10px;
-  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--pad-modal);
   max-width: 560px;
   width: 100%;
   max-height: 90vh;
@@ -90,9 +90,11 @@ defineEmits<{ (e: 'close'): void }>();
 .modal__close {
   background: transparent;
   border: none;
+  /* 24px is the icon glyph size (one-off, larger than --font-heading);
+     horizontal padding gives the × a comfortable hit area. */
   font-size: 24px;
   line-height: 1;
-  padding: 0 6px;
+  padding: 0 8px;
   cursor: pointer;
   color: var(--muted);
 }

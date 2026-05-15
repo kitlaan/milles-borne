@@ -103,8 +103,8 @@ const maxPeekPx = computed(() => (props.visibleStack - 1) * props.peekPx);
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  padding: 6px;
-  border-radius: 8px;
+  padding: var(--pad-panel);
+  border-radius: var(--radius-md);
   min-width: 80px;
 }
 
@@ -123,7 +123,7 @@ const maxPeekPx = computed(() => (props.visibleStack - 1) * props.peekPx);
 
 .pile__label {
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: var(--font-label);
   letter-spacing: 0.08em;
   color: var(--muted);
 }
@@ -155,13 +155,13 @@ const maxPeekPx = computed(() => (props.visibleStack - 1) * props.peekPx);
   cursor: zoom-in;
 }
 .pile--inspectable .pile__card:hover {
-  z-index: 10;
+  z-index: var(--z-pile-hover);
 }
 
 .pile__placeholder {
   width: 100%;
   height: 100%;
-  border: 1px dashed #555;
+  border: 1px dashed var(--border);
   border-radius: var(--card-radius);
   display: flex;
   align-items: center;
@@ -172,7 +172,7 @@ const maxPeekPx = computed(() => (props.visibleStack - 1) * props.peekPx);
 }
 
 .pile__count {
-  font-size: 11px;
+  font-size: var(--font-label);
   color: var(--muted);
 }
 </style>

@@ -37,7 +37,7 @@ async function newGame(): Promise<void> {
     :title="winnerLabel"
     :dismissible="false"
     :close-on-backdrop="false"
-    :z-index="90"
+    z-index="var(--z-finale)"
     max-width="520px"
   >
     <div v-for="s in scores" :key="s.seat" class="score-block">
@@ -58,10 +58,10 @@ async function newGame(): Promise<void> {
 
 <style scoped>
 .score-block {
-  background: #181818;
-  border: 1px solid #2a2a2a;
-  padding: 8px 12px;
-  border-radius: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  padding: var(--pad-control);
+  border-radius: var(--radius-sm);
 }
 .score-block header {
   display: flex;
@@ -73,7 +73,7 @@ async function newGame(): Promise<void> {
   margin: 0;
   padding: 0;
   list-style: none;
-  font-size: 13px;
+  font-size: var(--font-body);
 }
 .score-block li {
   display: grid;

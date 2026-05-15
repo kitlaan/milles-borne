@@ -81,7 +81,7 @@ const svgContent = computed(() => {
    overlap. */
 .card--legal {
   cursor: pointer;
-  outline: 2px solid #ffd84a;
+  outline: 2px solid var(--accent-legal);
   outline-offset: 3px;
   transform: translateY(-3px);
   border-radius: var(--card-radius);

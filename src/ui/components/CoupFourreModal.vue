@@ -71,7 +71,7 @@ async function pass(): Promise<void> {
     title="Coup-Fourré opportunity"
     :dismissible="false"
     :close-on-backdrop="false"
-    :z-index="100"
+    z-index="var(--z-interrupt)"
     max-width="480px"
   >
     <p>
@@ -96,7 +96,7 @@ async function pass(): Promise<void> {
 </template>
 
 <style scoped>
-.muted { color: var(--muted); font-size: 13px; }
+.muted { color: var(--muted); font-size: var(--font-body); }
 .actions {
   display: flex;
   flex-direction: column;
@@ -106,9 +106,9 @@ async function pass(): Promise<void> {
 .primary {
   background: var(--color-safety);
   border-color: var(--color-safety);
-  color: #1a1a1a;
+  color: var(--on-safety);
   font-weight: 600;
   text-transform: capitalize;
 }
-.primary:hover { background: #e6b850; }
+.primary:hover { background: var(--color-safety-hover); }
 </style>

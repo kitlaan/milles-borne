@@ -21,7 +21,7 @@ const title = computed(() => {
   <Modal
     :open="inspecting !== null"
     :title="title"
-    :z-index="85"
+    z-index="var(--z-inspector)"
     max-width="720px"
     @close="close"
   >
@@ -37,7 +37,7 @@ const title = computed(() => {
 </template>
 
 <style scoped>
-.muted { color: var(--muted); font-size: 12px; }
+.muted { color: var(--muted); font-size: var(--font-body); }
 .grid {
   display: flex;
   flex-wrap: wrap;

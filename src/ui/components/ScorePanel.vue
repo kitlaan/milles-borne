@@ -38,11 +38,11 @@ const scores = computed(() => computeScores(props.state, rules));
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 4px 12px;
-  padding: 12px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #1e1e1e;
-  font-size: 13px;
+  padding: var(--pad-section);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  font-size: var(--font-body);
   align-content: start;
   min-width: 0;
 }
@@ -50,7 +50,7 @@ const scores = computed(() => computeScores(props.state, rules));
 .label {
   color: var(--muted);
   text-transform: uppercase;
-  font-size: 11px;
+  font-size: var(--font-label);
   letter-spacing: 0.05em;
   min-width: 0;
   overflow: hidden;

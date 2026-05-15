@@ -41,7 +41,7 @@ const groups = computed<Group[]>(() => {
   <Modal
     :open="open"
     :title="`Theme preview: ${activeTheme.name}`"
-    :z-index="86"
+    z-index="var(--z-preview)"
     max-width="900px"
     @close="$emit('close')"
   >
@@ -71,7 +71,7 @@ const groups = computed<Group[]>(() => {
 <style scoped>
 .group h3 {
   margin: 0 0 8px;
-  font-size: 12px;
+  font-size: var(--font-heading);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
@@ -100,7 +100,7 @@ const groups = computed<Group[]>(() => {
   display: block;
 }
 .cell figcaption {
-  font-size: 10px;
+  font-size: var(--font-label);
   color: var(--muted);
   text-align: center;
   font-family: ui-monospace, SFMono-Regular, monospace;

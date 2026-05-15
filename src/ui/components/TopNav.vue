@@ -52,9 +52,9 @@ const statusLabel = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  background: #181818;
-  border-bottom: 1px solid #2a2a2a;
+  padding: var(--pad-topnav);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border-subtle);
   height: 48px;
   flex-shrink: 0;
 }
@@ -65,7 +65,7 @@ const statusLabel = computed(() => {
 .topnav__status {
   flex: 1;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--font-body);
   color: var(--muted);
   font-variant: small-caps;
   letter-spacing: 0.05em;

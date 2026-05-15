@@ -26,7 +26,6 @@ const playerConfigs = computed(() => store.playerConfigs);
   <Modal
     :open="open"
     title="How to play"
-    :z-index="80"
     @close="$emit('close')"
   >
     <section class="block">
@@ -97,7 +96,7 @@ const playerConfigs = computed(() => store.playerConfigs);
 <style scoped>
 .block h3 {
   margin: 0 0 4px;
-  font-size: 14px;
+  font-size: var(--font-heading);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--muted);

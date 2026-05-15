@@ -11,10 +11,13 @@ import type { CardBackId, ThemeId } from '@/ui/themes/types';
 
 const STORAGE_KEY = 'mille-bornes-settings';
 
+export type ColorMode = 'light' | 'dark' | 'auto';
+
 export type Settings = {
   readonly schemaVersion: 1;
   readonly themeId: ThemeId;
   readonly cardBackId: CardBackId;
+  readonly colorMode: ColorMode;
 };
 
 function defaults(): Settings {
@@ -22,6 +25,7 @@ function defaults(): Settings {
     schemaVersion: 1,
     themeId: DEFAULT_THEME_ID,
     cardBackId: 'theme',
+    colorMode: 'auto',
   };
 }
 
@@ -36,6 +40,7 @@ function loadInitial(): Settings {
       schemaVersion: 1,
       themeId: parsed.themeId ?? DEFAULT_THEME_ID,
       cardBackId: parsed.cardBackId ?? 'theme',
+      colorMode: parsed.colorMode ?? 'auto',
     };
   } catch {
     return defaults();
@@ -68,6 +73,9 @@ export function useSettings() {
     },
     setCardBack(id: CardBackId): void {
       settings.value = { ...settings.value, cardBackId: id };
+    },
+    setColorMode(mode: ColorMode): void {
+      settings.value = { ...settings.value, colorMode: mode };
     },
     resetToDefaults(): void {
       settings.value = defaults();

@@ -45,10 +45,10 @@ const safetyCards = computed(() => props.seat.tableau.safeties.map((s) => s.card
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 8px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background: #1e1e1e;
+  padding: var(--pad-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--surface);
 }
 
 .tableau--targetable {
@@ -60,7 +60,7 @@ const safetyCards = computed(() => props.seat.tableau.safeties.map((s) => s.card
 .tableau__header {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: var(--font-body);
   color: var(--muted);
 }
 

@@ -1,10 +1,36 @@
-/* Base styles. Theming variables land here once phase 4 introduces themes;
-   for now this is just a sane default + reset. */
+/* Base styles + light/dark via CSS `light-dark()`.
+ *
+ * Each chrome variable holds both palettes in one declaration. The active
+ * value is picked by the document's `color-scheme`:
+ *   - `light dark`  (default) → browser follows the user's OS preference
+ *   - `only light`            → always light (user override)
+ *   - `only dark`             → always dark (user override)
+ *
+ * useColorMode writes one of those three values to documentElement based on
+ * the persisted setting. No JS matchMedia listener needed — the CSS engine
+ * already handles "follow system" via `color-scheme: light dark`.
+ *
+ * Card themes (Classic, Minimal) own --card-bg / --card-fg / --color-*
+ * separately and override these vars from useTheme; they're mode-agnostic
+ * today (cream + white cards both look right on either backdrop, mostly).
+ */
 
 :root {
-  --bg: #1a1a1a;
-  --fg: #e8e8e8;
-  --muted: #888;
+  color-scheme: light dark;
+
+  /* Chrome — first arg = light, second arg = dark. */
+  --bg:             light-dark(#f4f4f4, #1a1a1a);
+  --surface:        light-dark(#ffffff, #1e1e1e);
+  --surface-2:      light-dark(#fafafa, #181818);
+  --surface-elev:   light-dark(#eaeaea, #2a2a2a);
+  --border:         light-dark(#d0d0d0, #444444);
+  --border-subtle:  light-dark(#e2e2e2, #333333);
+  --fg:             light-dark(#1a1a1a, #e8e8e8);
+  --muted:          light-dark(#666666, #888888);
+  --hover:          light-dark(#e0e0e0, #333333);
+  --backdrop:       light-dark(rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.6));
+
+  /* Card defaults (themes override). */
   --card-bg: #fafafa;
   --card-fg: #1a1a1a;
   --card-frame: #333;
@@ -14,8 +40,46 @@
   --color-remedy: #2e8a3c;
   --color-safety: #c89827;
 
+  /* Brand accents — not chrome, not theme. Centralized for tunability. */
+  --accent-legal:        #ffd84a;  /* yellow halo on playable hand cards */
+  --on-safety:           #1a1a1a;  /* dark text on safety-yellow backgrounds */
+  --color-safety-hover:  #e6b850;  /* lighter safety yellow on hover */
+
+  /* Geometry tokens — three radius scales cover everything except cards,
+     which keep their own --card-radius (theme-controlled). */
+  --radius-sm: 4px;   /* buttons, selects, small inputs */
+  --radius-md: 8px;   /* panels: tableau, score-panel, pile container */
+  --radius-lg: 10px;  /* modals */
+
+  /* Padding tokens — named by role so themes can adjust density per-area
+     instead of nudging a numeric scale. One-offs (modal close glyph,
+     Hand's lift clearance) stay inline. */
+  --pad-control:        8px 12px;  /* default buttons, EndOverlay score-block */
+  --pad-control-tight:  4px 8px;   /* selects, icon-buttons */
+  --pad-panel:          8px;       /* tableau, pile container */
+  --pad-section:        12px;      /* Board outer, ScorePanel */
+  --pad-modal:          20px 24px; /* modal body */
+  --pad-modal-edge:     16px;      /* modal backdrop edge */
+  --pad-topnav:         8px 16px;  /* TopNav strip */
+
+  /* Font tokens for sub-text sizes. Modal close glyph uses 24px inline
+     (one-off icon-sized). */
+  --font-label:    11px;  /* uppercase tiny labels, counts, captions */
+  --font-body:     13px;  /* default text, hints, status badge */
+  --font-heading:  14px;  /* section h3, emphasis */
+
+  /* Overlay z-index hierarchy. Lower number = lower in the stack. Modals
+     are ordered so a Coup-Fourré interrupt always sits above any other
+     overlay that may already be open when the engine emits its
+     awaiting-response phase. */
+  --z-pile-hover:  10;   /* peek-card brought forward within a Pile stack */
+  --z-modal:       80;   /* default modal layer (Settings, Rules) */
+  --z-inspector:   85;   /* pile inspector — may open on top of a modal */
+  --z-preview:     86;   /* theme preview — sits above the inspector */
+  --z-finale:      90;   /* game-end overlay */
+  --z-interrupt:  100;   /* coup-fourré interrupt — top of stack */
+
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color-scheme: dark;
 }
 
 * {
@@ -38,17 +102,17 @@ html, body, #app {
 button {
   font: inherit;
   color: inherit;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 4px;
-  padding: 6px 12px;
+  background: var(--surface-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: var(--pad-control);
   cursor: pointer;
 }
 
-/* Skip card buttons — Card.vue manages its own hover state and global
-   button hover would override the card's light background. */
+/* Card buttons manage their own surface; the global rule would override
+   the theme-owned light card background otherwise. */
 button:hover:not(:disabled):not(.card) {
-  background: #333;
+  background: var(--hover);
 }
 
 button:disabled {

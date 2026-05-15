@@ -101,21 +101,27 @@ const back = `
   </svg>
 `.trim();
 
+// The card palette uses `light-dark()` so the theme tracks the active UI
+// color mode: cards are white-on-black ink in light mode and black-on-
+// white ink in dark mode. Category colors stay constant — they read fine
+// against either background.
 export const minimalTheme: Theme = {
   id: 'minimal',
   name: 'Minimal',
   cards: buildAllCards(),
   back,
   cssVars: {
-    '--card-bg': '#ffffff',
-    '--card-fg': '#1a1a1a',
-    '--color-mileage': '#1f6feb',
-    '--color-hazard': '#cf222e',
-    '--color-remedy': '#1a7f37',
-    '--color-safety': '#bf8700',
-    '--card-back-a': '#1a1a1a',
-    '--card-back-b': '#222',
-    '--card-back-frame': '#888',
-    '--card-back-fg': '#eaeaea',
+    '--card-bg':         'light-dark(#ffffff, #1a1a1a)',
+    '--card-fg':         'light-dark(#1a1a1a, #f0f0f0)',
+    '--color-mileage':   '#1f6feb',
+    '--color-hazard':    '#cf222e',
+    '--color-remedy':    '#1a7f37',
+    '--color-safety':    '#bf8700',
+    // Card back is a neutral mid-grey in both modes — distinct from the
+    // surrounding surface without yelling at it.
+    '--card-back-a':     '#707070',
+    '--card-back-b':     '#5e5e5e',
+    '--card-back-frame': '#909090',
+    '--card-back-fg':    '#f0f0f0',
   },
 };

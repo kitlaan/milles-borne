@@ -193,7 +193,7 @@ async function discardSelected(): Promise<void> {
     'me';
   grid-template-columns: 1fr;
   gap: 12px;
-  padding: 12px;
+  padding: var(--pad-section);
   flex: 1;
 }
 
@@ -226,7 +226,7 @@ async function discardSelected(): Promise<void> {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--font-body);
 }
 
 .muted { color: var(--muted); }
@@ -234,10 +234,10 @@ async function discardSelected(): Promise<void> {
 .discard-select {
   font: inherit;
   color: inherit;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: var(--surface-elev);
+  border: 1px solid var(--border);
+  padding: var(--pad-control-tight);
+  border-radius: var(--radius-sm);
 }
 
 .board--loading {

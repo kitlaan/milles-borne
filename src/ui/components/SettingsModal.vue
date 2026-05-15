@@ -3,7 +3,7 @@
 // ruleset / AI selectors slot in here in later phases.
 
 import { ref } from 'vue';
-import { useSettings } from '@/ui/composables/useSettings';
+import { useSettings, type ColorMode } from '@/ui/composables/useSettings';
 import { themeRegistry } from '@/ui/themes';
 import Modal from './Modal.vue';
 import ThemeShower from './ThemeShower.vue';
@@ -11,7 +11,7 @@ import ThemeShower from './ThemeShower.vue';
 defineProps<{ open: boolean }>();
 defineEmits<{ (e: 'close'): void }>();
 
-const { settings, setTheme, setCardBack } = useSettings();
+const { settings, setTheme, setCardBack, setColorMode } = useSettings();
 const themes = themeRegistry();
 const showerOpen = ref(false);
 
@@ -24,13 +24,17 @@ function onCardBackChange(e: Event): void {
   const v = (e.target as HTMLSelectElement).value;
   setCardBack(v);
 }
+
+function onColorModeChange(e: Event): void {
+  const v = (e.target as HTMLSelectElement).value as ColorMode;
+  setColorMode(v);
+}
 </script>
 
 <template>
   <Modal
     :open="open"
     title="Settings"
-    :z-index="80"
     max-width="420px"
     @close="$emit('close')"
   >
@@ -69,6 +73,19 @@ function onCardBackChange(e: Event): void {
         <option v-for="t in themes" :key="t.id" :value="t.id">{{ t.name }} back</option>
       </select>
     </section>
+
+    <section class="row">
+      <label for="set-mode">Color mode</label>
+      <select
+        id="set-mode"
+        :value="settings.colorMode"
+        @change="onColorModeChange"
+      >
+        <option value="auto">Auto (follow system)</option>
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+      </select>
+    </section>
   </Modal>
   <ThemeShower :open="showerOpen" @close="showerOpen = false" />
 </template>
@@ -81,7 +98,7 @@ function onCardBackChange(e: Event): void {
   align-items: center;
 }
 .row label, .row .label {
-  font-size: 13px;
+  font-size: var(--font-body);
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -89,10 +106,10 @@ function onCardBackChange(e: Event): void {
 .row select {
   font: inherit;
   color: inherit;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  padding: 4px 8px;
-  border-radius: 4px;
+  background: var(--surface-elev);
+  border: 1px solid var(--border);
+  padding: var(--pad-control-tight);
+  border-radius: var(--radius-sm);
   width: 100%;
 }
 .control {
@@ -102,17 +119,17 @@ function onCardBackChange(e: Event): void {
 }
 .control select { flex: 1; }
 .icon-btn {
-  padding: 4px 10px;
-  background: #2a2a2a;
-  border: 1px solid #444;
-  border-radius: 4px;
+  padding: var(--pad-control-tight);
+  background: var(--surface-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 14px;
+  font-size: var(--font-heading);
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-.icon-btn:hover { background: #333; }
+.icon-btn:hover { background: var(--hover); }
 .icon-btn svg { display: block; }
 </style>
