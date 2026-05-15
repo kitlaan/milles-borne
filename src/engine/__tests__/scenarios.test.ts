@@ -47,7 +47,7 @@ function makeState(overrides: Partial<GameState> = {}): GameState {
 const rules = defaultRules();
 
 describe('Speed Limit cycle', () => {
-  it('Speed Limit blocks 100/200 but allows 25/50/75; End of Limit re-enables', () => {
+  it('Speed Limit blocks 75/100/200 but allows 25/50; End of Limit re-enables', () => {
     const roll = makeCard('remedy-roll');
     const limit = makeCard('hazard-speed-limit');
     const filler = makeCard('mile-25', 'filler');
@@ -69,7 +69,7 @@ describe('Speed Limit cycle', () => {
       reduce(state, { seat: 0, type: 'PLAY', cardId: m100.id }, rules),
     ).toThrow(/speed limit/);
 
-    // 75 still legal.
+    // 75 also blocked.
     const m75 = makeCard('mile-75', 'b');
     state = makeState({
       deck: [filler],
@@ -82,12 +82,29 @@ describe('Speed Limit cycle', () => {
         blankSeat(1),
       ],
     });
-    const afterMile = reduce(state, { seat: 0, type: 'PLAY', cardId: m75.id }, rules);
-    expect(sumDistance(afterMile.seats[0]!)).toBe(75);
+    expect(() =>
+      reduce(state, { seat: 0, type: 'PLAY', cardId: m75.id }, rules),
+    ).toThrow(/speed limit/);
+
+    // 50 is legal.
+    const m50 = makeCard('mile-50', 'c');
+    state = makeState({
+      deck: [filler],
+      seats: [
+        {
+          id: 0,
+          hand: [m50],
+          tableau: { battle: [roll], speed: [limit], distance: [], safeties: [] },
+        },
+        blankSeat(1),
+      ],
+    });
+    const afterMile = reduce(state, { seat: 0, type: 'PLAY', cardId: m50.id }, rules);
+    expect(sumDistance(afterMile.seats[0]!)).toBe(50);
 
     // Play End of Limit, then 100 becomes legal again.
     const eol = makeCard('remedy-end-of-limit');
-    const m100b = makeCard('mile-100', 'c');
+    const m100b = makeCard('mile-100', 'd');
     state = makeState({
       deck: [filler],
       seats: [

@@ -266,6 +266,26 @@ describe('reducer — PLAY hazard / remedy', () => {
     expect(after.seats[0]!.tableau.battle).toEqual([]);
   });
 
+  it('speed-limit hazard goes on victim speed pile, not battle pile', () => {
+    const roll = makeCard('remedy-roll');
+    const speedLimit = makeCard('hazard-speed-limit');
+    const filler = makeCard('mile-25', 'filler');
+    const state = makeState({
+      deck: [filler],
+      seats: [
+        { id: 0, hand: [speedLimit], tableau: { battle: [], speed: [], distance: [], safeties: [] } },
+        { id: 1, hand: [], tableau: { battle: [roll], speed: [], distance: [], safeties: [] } },
+      ],
+    });
+    const after = reduce(
+      state,
+      { seat: 0, type: 'PLAY', cardId: speedLimit.id, targetSeat: 1 },
+      rules,
+    );
+    expect(after.seats[1]!.tableau.speed.at(-1)?.id).toBe(speedLimit.id);
+    expect(after.seats[1]!.tableau.battle).toEqual([roll]); // unchanged
+  });
+
   it('immune target rejects matching hazard play', () => {
     const safety = makeCard('safety-driving-ace');
     const accident = makeCard('hazard-accident');

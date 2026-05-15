@@ -94,8 +94,10 @@ function validateMile(card: Card, seat: Seat, state: GameState): ValidationResul
   const val = mileValueOf(card.type);
   if (val === null) return { reject: 'not a mile card' };
   if (!isRolling(seat)) return { reject: 'cannot drive: not rolling' };
-  if (isSpeedLimited(seat) && val >= 100) {
-    return { reject: 'speed limit forbids 100/200 mile cards' };
+  // Per standard rules, Speed Limit restricts the affected player to 25- and
+  // 50-mile cards. 75/100/200 are all blocked.
+  if (isSpeedLimited(seat) && val > 50) {
+    return { reject: 'speed limit forbids cards over 50 miles' };
   }
   if (val === 200 && count200(seat) >= 2) {
     return { reject: 'at most two 200-mile cards per hand' };
@@ -221,11 +223,15 @@ function applyPlay(action: Action & { type: 'PLAY' }, state: GameState): GameSta
     case 'hazard': {
       const victim = action.targetSeat!;
       const v = state.seats[victim]!;
+      const haz = hazardOf(card.type);
+      // Speed-Limit goes on the *speed* pile; all other hazards on battle.
+      // Reflects the actual game piles — End of Limit / Right of Way work
+      // against the speed pile, while remedies/Roll work against battle.
+      const newTableau = haz === 'speed-limit'
+        ? { ...v.tableau, speed: [...v.tableau.speed, card] }
+        : { ...v.tableau, battle: [...v.tableau.battle, card] };
       const newSeats0 = replaceSeat(state.seats, action.seat, { ...seat, hand: newHand });
-      const newSeats = replaceSeat(newSeats0, victim, {
-        ...v,
-        tableau: { ...v.tableau, battle: [...v.tableau.battle, card] },
-      });
+      const newSeats = replaceSeat(newSeats0, victim, { ...v, tableau: newTableau });
       // Coup-Fourré detection is the coup-fourre rule's responsibility
       // (post-apply hook). Core just places the hazard and ends the turn.
       return endTurn({ ...state, seats: newSeats });
