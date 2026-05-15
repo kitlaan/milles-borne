@@ -149,11 +149,12 @@ const maxPeekPx = computed(() => (props.visibleStack - 1) * props.peekPx);
 
 /* Hovering a peek card pulls it forward in z-stack — no motion, just
    stacking order change — so the older card's full face is revealed
-   (the newer card that was covering it now sits behind). */
+   (the newer card that was covering it now sits behind). Only applies to
+   inspectable piles; face-down stacks like the deck stay inert. */
 .pile--inspectable .pile__card {
   cursor: zoom-in;
 }
-.pile__card:hover {
+.pile--inspectable .pile__card:hover {
   z-index: 10;
 }
 

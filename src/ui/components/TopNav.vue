@@ -9,11 +9,13 @@
 import { computed, ref } from 'vue';
 import { useGameStore } from '@/ui/stores/game';
 import RulesModal from './RulesModal.vue';
+import SettingsModal from './SettingsModal.vue';
 
 defineEmits<{ (e: 'new-game'): void }>();
 
 const store = useGameStore();
 const rulesOpen = ref(false);
+const settingsOpen = ref(false);
 
 const statusLabel = computed(() => {
   if (!store.state) return 'loading…';
@@ -38,10 +40,11 @@ const statusLabel = computed(() => {
     <div class="topnav__actions">
       <button aria-label="How to play" title="How to play" @click="rulesOpen = true">?</button>
       <button @click="$emit('new-game')">New game</button>
-      <!-- Future: <button aria-label="Menu">☰</button> opens settings drawer -->
+      <button aria-label="Settings" title="Settings" @click="settingsOpen = true">☰</button>
     </div>
   </header>
   <RulesModal :open="rulesOpen" @close="rulesOpen = false" />
+  <SettingsModal :open="settingsOpen" @close="settingsOpen = false" />
 </template>
 
 <style scoped>

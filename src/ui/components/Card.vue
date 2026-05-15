@@ -1,12 +1,15 @@
 <script setup lang="ts">
-// Placeholder card visual: typography + category-color border. SVG art
-// arrives in phase 4; this component is the swap point. Props are stable
-// across themes, so phase 4 can change `:style`/template without touching
-// callers.
+// Card renders the active theme's SVG for the given card type (or the
+// resolved back SVG when face-down). Container handles legality outline +
+// lift; the SVG inside the button owns the frame, fill, and any glyphs.
+//
+// Themes inject CSS variables (e.g. `--card-bg`, `--color-mileage`) at the
+// document root; SVG content references them via `var(--*)` so palette
+// swaps happen at runtime without re-rendering this component.
 
 import { computed } from 'vue';
 import type { Card } from '@/engine/cards';
-import { mileValueOf } from '@/engine/cards';
+import { useTheme } from '@/ui/composables/useTheme';
 
 const props = withDefaults(
   defineProps<{
@@ -20,42 +23,27 @@ const props = withDefaults(
 
 defineEmits<{ (e: 'click'): void }>();
 
+const { activeTheme, resolvedBack } = useTheme();
+
 const isFaceUp = computed(() => props.card !== null && props.faceUp);
 
-const label = computed(() => {
+const svgContent = computed(() => {
+  if (!isFaceUp.value) return resolvedBack.value;
   const c = props.card;
   if (!c) return '';
-  const v = mileValueOf(c.type);
-  if (v !== null) return `${v}`;
-  // Strip the `<category>-` prefix from the type for compact display.
-  return c.type.replace(/^[^-]+-/, '').replace(/-/g, ' ');
+  return activeTheme.value.cards[c.type] ?? '';
 });
-
-const sublabel = computed(() => {
-  const c = props.card;
-  if (!c) return '';
-  return c.category;
-});
-
-const categoryClass = computed(() =>
-  props.card ? `card--${props.card.category}` : null,
-);
 </script>
 
 <template>
   <button
     type="button"
     class="card"
-    :class="[categoryClass, { 'card--legal': legal, 'card--selected': selected, 'card--down': !isFaceUp }]"
+    :class="{ 'card--legal': legal, 'card--selected': selected, 'card--down': !isFaceUp }"
     @click="$emit('click')"
   >
-    <template v-if="isFaceUp">
-      <div class="card__label">{{ label }}</div>
-      <div class="card__sublabel">{{ sublabel }}</div>
-    </template>
-    <template v-else>
-      <div class="card__back">MB</div>
-    </template>
+    <!-- eslint-disable-next-line vue/no-v-html -- SVG content is internal (theme modules), never user-supplied. -->
+    <span class="card__inner" v-html="svgContent" />
   </button>
 </template>
 
@@ -63,26 +51,29 @@ const categoryClass = computed(() =>
 .card {
   width: clamp(56px, 10vw, 92px);
   aspect-ratio: 5 / 7;
-  border-radius: var(--card-radius);
-  background: var(--card-bg);
-  color: var(--card-fg);
-  border: 2px solid var(--card-frame);
-  padding: 6px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  font-size: clamp(11px, 1.6vw, 14px);
-  line-height: 1.15;
+  background: transparent;
+  border: none;
+  padding: 0;
   cursor: default;
   user-select: none;
   transition: transform 80ms ease-out;
+  display: block;
 }
 
-.card--mileage { border-color: var(--color-mileage); }
-.card--hazard  { border-color: var(--color-hazard); }
-.card--remedy  { border-color: var(--color-remedy); }
-.card--safety  { border-color: var(--color-safety); }
+.card__inner {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Inner SVG fills the button; pointer events ignore SVG internals so the
+   whole card reacts to clicks/hovers uniformly. */
+.card__inner :deep(svg) {
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+}
 
 /* Legal cards in Hand are marked by a bright yellow outline + a small
    permanent lift so they "stick out" from the row. Hover adds extra lift.
@@ -93,6 +84,7 @@ const categoryClass = computed(() =>
   outline: 2px solid #ffd84a;
   outline-offset: 3px;
   transform: translateY(-3px);
+  border-radius: var(--card-radius);
 }
 .card--legal:hover {
   transform: translateY(-8px);
@@ -102,30 +94,6 @@ const categoryClass = computed(() =>
   outline: 3px solid var(--color-safety);
   outline-offset: 4px;
   transform: translateY(-8px);
-}
-
-.card--down {
-  background: linear-gradient(135deg, #2a2a2a, #444);
-  color: #999;
-  border-color: #555;
-}
-
-.card__label {
-  font-weight: 700;
-  font-size: clamp(14px, 2.4vw, 22px);
-  text-transform: capitalize;
-  text-align: center;
-}
-
-.card__sublabel {
-  text-transform: uppercase;
-  font-size: 0.7em;
-  opacity: 0.65;
-  letter-spacing: 0.05em;
-}
-
-.card__back {
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  border-radius: var(--card-radius);
 }
 </style>
