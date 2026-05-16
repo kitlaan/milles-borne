@@ -71,11 +71,16 @@ function actingSeat(state: GameState): number {
   return state.currentSeat;
 }
 
+type GameOutcome =
+  | { kind: 'completed'; actionLog: Action[]; steps: number }
+  | { kind: 'timedout'; actionLog: Action[]; steps: number }
+  | { kind: 'deadlocked'; actionLog: Action[]; steps: number; seat: number };
+
 async function playOneGame(
   seed: number,
   rules: ReturnType<typeof rulesFromIds>,
   ai: ReturnType<typeof aiOrDefault>,
-): Promise<{ actionLog: Action[]; completed: boolean; steps: number }> {
+): Promise<GameOutcome> {
   let state = createInitialState({ seats: 2, rules, seed });
   const actionLog: Action[] = [];
   let steps = 0;
@@ -84,15 +89,21 @@ async function playOneGame(
     const view = toSeatView(state, seat);
     const legal = legalActions(state, seat, rules);
     if (legal.length === 0) {
-      // Engine should never produce a deadlock; surface loudly.
-      throw new Error(`generator deadlock: seat ${seat} has no legal actions at step ${steps} (seed ${seed})`);
+      // Deadlocks shouldn't reach here once engine bugs are fixed, but
+      // staying tolerant means a future engine regression doesn't take
+      // out a whole training run. Treat the game as unusable and let
+      // the caller skip it.
+      return { kind: 'deadlocked', actionLog, steps, seat };
     }
     const action = await ai.play(view, legal);
     actionLog.push(action);
     state = reduce(state, action, rules);
     steps++;
   }
-  return { actionLog, completed: state.phase === 'ended', steps };
+  if (state.phase === 'ended') {
+    return { kind: 'completed', actionLog, steps };
+  }
+  return { kind: 'timedout', actionLog, steps };
 }
 
 async function main(): Promise<void> {
@@ -125,18 +136,32 @@ async function main(): Promise<void> {
 
   const lines: string[] = [];
   let completed = 0;
+  let timedout = 0;
+  let deadlocked = 0;
   let totalSteps = 0;
 
   for (let i = 0; i < manifest.numGames; i++) {
     const seed = manifest.seedBase + i;
-    const { actionLog, completed: ok, steps } = await playOneGame(seed, rules, ai);
-    if (ok) completed++;
-    totalSteps += steps;
-    lines.push(JSON.stringify({ seed, actionLog }));
+    const outcome = await playOneGame(seed, rules, ai);
+    totalSteps += outcome.steps;
+    if (outcome.kind === 'completed') {
+      completed++;
+      lines.push(JSON.stringify({ seed, actionLog: outcome.actionLog }));
+    } else if (outcome.kind === 'timedout') {
+      timedout++;
+      console.warn(
+        `[generate-training-data] seed ${seed}: timed out after ${outcome.steps} steps — skipping`,
+      );
+    } else {
+      deadlocked++;
+      console.warn(
+        `[generate-training-data] seed ${seed}: engine deadlock at step ${outcome.steps} seat ${outcome.seat} — skipping (engine bug)`,
+      );
+    }
     if ((i + 1) % 100 === 0) {
       const pct = ((i + 1) / manifest.numGames) * 100;
       console.log(
-        `  ${i + 1}/${manifest.numGames} games (${pct.toFixed(1)}%) | mean steps ${(totalSteps / (i + 1)).toFixed(1)}`,
+        `  ${i + 1}/${manifest.numGames} games (${pct.toFixed(1)}%) | mean steps ${(totalSteps / (i + 1)).toFixed(1)} | completed=${completed} timedout=${timedout} deadlocked=${deadlocked}`,
       );
     }
   }
@@ -148,7 +173,7 @@ async function main(): Promise<void> {
 
   const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.log(
-    `\nDone in ${elapsed}s | wrote ${manifest.numGames} games (${completed} completed, ${manifest.numGames - completed} timed out) → ${outPath}`,
+    `\nDone in ${elapsed}s | wrote ${completed} completed games (skipped ${timedout} timed-out, ${deadlocked} deadlocked) → ${outPath}`,
   );
 }
 
