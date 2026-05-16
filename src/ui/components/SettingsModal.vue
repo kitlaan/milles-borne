@@ -3,6 +3,7 @@
 // ruleset / AI selectors slot in here in later phases.
 
 import { computed, ref } from 'vue';
+import { aiRegistry } from '@/ai';
 import { OPTIONAL_RULE_IDS, RULE_LIBRARY } from '@/engine/rules';
 import { useSettings, type ColorMode } from '@/ui/composables/useSettings';
 import { themeRegistry } from '@/ui/themes';
@@ -12,8 +13,10 @@ import ThemeShower from './ThemeShower.vue';
 defineProps<{ open: boolean }>();
 defineEmits<{ (e: 'close'): void }>();
 
-const { settings, setTheme, setCardBack, setColorMode, toggleRule } = useSettings();
+const { settings, setTheme, setCardBack, setColorMode, setAiId, toggleRule } =
+  useSettings();
 const themes = themeRegistry();
+const ais = aiRegistry();
 const showerOpen = ref(false);
 
 const optionalRules = computed(() =>
@@ -46,6 +49,11 @@ function onCardBackChange(e: Event): void {
 function onColorModeChange(e: Event): void {
   const v = (e.target as HTMLSelectElement).value as ColorMode;
   setColorMode(v);
+}
+
+function onAiChange(e: Event): void {
+  const v = (e.target as HTMLSelectElement).value;
+  setAiId(v);
 }
 </script>
 
@@ -102,6 +110,17 @@ function onColorModeChange(e: Event): void {
         <option value="auto">Auto (follow system)</option>
         <option value="light">Light</option>
         <option value="dark">Dark</option>
+      </select>
+    </section>
+
+    <section class="row">
+      <label for="set-ai">AI opponent</label>
+      <select
+        id="set-ai"
+        :value="settings.aiId"
+        @change="onAiChange"
+      >
+        <option v-for="a in ais" :key="a.id" :value="a.id">{{ a.displayName }}</option>
       </select>
     </section>
 

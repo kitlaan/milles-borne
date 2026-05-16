@@ -1,7 +1,7 @@
 // Drives action dispatch for non-interactive turn segments.
 //
 // Triggers (all keyed off the store's actingSeat + phase):
-//   - AI seat's turn / response   → asks dumbAI for an action, dispatches
+//   - AI seat's turn / response   → asks the seat's AI for an action, dispatches
 //   - Human seat in 'draw' phase  → auto-dispatches DRAW (no click needed)
 //
 // Human seat in 'action' or 'awaiting-response' phase is left to the UI to
@@ -19,7 +19,7 @@
 // picked up immediately.
 
 import { watchEffect, type Ref } from 'vue';
-import { dumbAI } from '@/ai/dumb';
+import { aiOrDefault } from '@/ai';
 import { legalActions } from '@/engine/legal';
 import type { useGameStore } from '@/ui/stores/game';
 
@@ -79,7 +79,12 @@ export function useTurnDriver(
           if (!view) return;
           const legal = legalActions(store.state, seat, store.activeRules);
           if (legal.length === 0) return;
-          const action = await dumbAI.play(view, legal);
+          // Resolve the AI player from this seat's persisted config so
+          // multi-AI configurations work correctly.
+          const config = store.configFor(seat);
+          const aiId = config?.kind === 'ai' ? config.ai.id : null;
+          const ai = aiOrDefault(aiId);
+          const action = await ai.play(view, legal);
           await store.dispatch(action);
         } catch (err) {
           console.error('[turn-driver] AI dispatch failed:', err);

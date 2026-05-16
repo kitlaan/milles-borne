@@ -20,7 +20,7 @@
 
 import { defineStore } from 'pinia';
 import { computed, ref, shallowRef } from 'vue';
-import { dumbAI } from '@/ai/dumb';
+import { aiOrDefault } from '@/ai';
 import type { Action } from '@/engine/actions';
 import { buildEngineDescriptor } from '@/engine/descriptor';
 import { reduce } from '@/engine/reducer';
@@ -44,14 +44,15 @@ import type { PlayerConfig } from '@/persistence/records';
 const HUMAN_SEAT = 0;
 const AI_SEAT = 1;
 
-function defaultPlayerConfigs(): PlayerConfig[] {
+function playerConfigsForAi(aiId: string): PlayerConfig[] {
+  const ai = aiOrDefault(aiId);
   return [
     { seatId: HUMAN_SEAT, kind: 'human', displayName: 'You' },
     {
       seatId: AI_SEAT,
       kind: 'ai',
-      displayName: 'Dumb AI',
-      ai: { id: dumbAI.id, version: dumbAI.version },
+      displayName: ai.displayName,
+      ai: { id: ai.id, version: ai.version },
     },
   ];
 }
@@ -77,7 +78,9 @@ export const useGameStore = defineStore('game', () => {
   const actionLog = shallowRef<Action[]>([]);
   const seed = ref<number>(0);
   const startedAt = ref<string>('');
-  const playerConfigs = shallowRef<PlayerConfig[]>(defaultPlayerConfigs());
+  const playerConfigs = shallowRef<PlayerConfig[]>(
+    playerConfigsForAi(settings.value.aiId),
+  );
   const initialized = ref(false);
   // Rules in force for the *current* game. Resolved on init / newGame.
   const activeRules = shallowRef<RulePlugin[]>(
@@ -115,9 +118,9 @@ export const useGameStore = defineStore('game', () => {
     if (initialized.value) return;
     const snapshot = await loadCurrentGame();
     if (snapshot) {
-      // Resume previous game using the rules it was started under, so a
-      // settings change between hands doesn't change the rules of the
-      // in-progress game.
+      // Resume previous game using the rules + player configs it was
+      // started under, so settings changes between hands don't perturb
+      // the in-progress game's rules or AI lineup.
       try {
         const resumed = rulesFromIds(snapshot.ruleIds);
         activeRules.value = resumed;
@@ -125,6 +128,9 @@ export const useGameStore = defineStore('game', () => {
         actionLog.value = [...snapshot.actionLog];
         seed.value = snapshot.seed;
         startedAt.value = snapshot.startedAt;
+        if (snapshot.playerConfigs) {
+          playerConfigs.value = [...snapshot.playerConfigs];
+        }
         initialized.value = true;
         return;
       } catch (err) {
@@ -151,7 +157,7 @@ export const useGameStore = defineStore('game', () => {
     actionLog.value = [];
     seed.value = newSeed;
     startedAt.value = new Date().toISOString();
-    playerConfigs.value = defaultPlayerConfigs();
+    playerConfigs.value = playerConfigsForAi(settings.value.aiId);
     await persistSnapshot();
   }
 
@@ -175,6 +181,7 @@ export const useGameStore = defineStore('game', () => {
         seed: seed.value,
         ruleIds: activeRules.value.map((r) => r.id),
         startedAt: startedAt.value,
+        playerConfigs: playerConfigs.value,
       });
     } catch (err) {
       // Quota, private mode, IDB unavailable: log but don't reject dispatch.

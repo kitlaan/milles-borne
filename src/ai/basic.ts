@@ -1,4 +1,4 @@
-// "Dumb" AI baseline.
+// "Basic" AI baseline (previously "Dumb").
 //
 // Priority order (in action phase):
 //   1. Play a safety (always; +100 each, denies future hazards).
@@ -13,16 +13,16 @@
 //
 // Not strategic — never holds safeties for Coup-Fourré, never times hazards
 // to disrupt opponent late game. Serves as a baseline for replay validation
-// and a sparring partner for future heuristic/ML AIs.
+// and a sparring partner for future heuristic / ML AIs.
 
 import type { Action } from '@/engine/actions';
 import type { Card } from '@/engine/cards';
 import { mileValueOf } from '@/engine/cards';
 import type { AIPlayer, AIPlayerInfo } from './types';
 
-const dumbPlay: AIPlayer = async (view, legal) => {
+const basicPlay: AIPlayer = async (view, legal) => {
   if (legal.length === 0) {
-    throw new Error('dumb AI: no legal actions available');
+    throw new Error('basic AI: no legal actions available');
   }
   if (legal.length === 1) return legal[0]!;
 
@@ -84,9 +84,9 @@ function cardValueForDiscard(card: Card | null): number {
   }
 }
 
-export const dumbAI: AIPlayerInfo = {
-  id: 'dumb',
-  displayName: 'Dumb AI',
-  version: '0.1.0',
-  play: dumbPlay,
+export const basicAI: AIPlayerInfo = {
+  id: 'basic',
+  displayName: 'Basic',
+  version: '0.2.0',
+  play: basicPlay,
 };

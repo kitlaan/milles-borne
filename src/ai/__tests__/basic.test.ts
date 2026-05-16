@@ -5,14 +5,14 @@ import { defaultRules } from '@/engine/rules';
 import { createInitialState } from '@/engine/setup';
 import type { GameState } from '@/engine/state';
 import { toSeatView } from '@/engine/view';
-import { dumbAI } from '../dumb';
+import { basicAI } from '../basic';
 
 function actingSeat(state: GameState): number {
   if (state.phase === 'awaiting-response' && state.awaiting) return state.awaiting.seat;
   return state.currentSeat;
 }
 
-describe('dumb AI', () => {
+describe('basic AI', () => {
   const rules = defaultRules();
 
   it('always returns a legal action when one exists', async () => {
@@ -23,7 +23,7 @@ describe('dumb AI', () => {
         const seat = actingSeat(state);
         const view = toSeatView(state, seat);
         const legal = legalActions(state, seat, rules);
-        const picked = await dumbAI.play(view, legal);
+        const picked = await basicAI.play(view, legal);
         expect(legal, `seed ${seed} step ${i}`).toContainEqual(picked);
         state = reduce(state, picked, rules);
       }
@@ -38,7 +38,7 @@ describe('dumb AI', () => {
         const seat = actingSeat(state);
         const view = toSeatView(state, seat);
         const legal = legalActions(state, seat, rules);
-        const picked = await dumbAI.play(view, legal);
+        const picked = await basicAI.play(view, legal);
         state = reduce(state, picked, rules);
       }
       if (state.phase === 'ended') ended++;

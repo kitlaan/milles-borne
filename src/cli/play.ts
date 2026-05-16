@@ -15,7 +15,7 @@ import 'fake-indexeddb/auto';
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { dumbAI } from '@/ai/dumb';
+import { basicAI } from '@/ai';
 import { buildEngineDescriptor } from '@/engine/descriptor';
 import { legalActions } from '@/engine/legal';
 import { reduce } from '@/engine/reducer';
@@ -65,7 +65,7 @@ async function main(): Promise<void> {
     if (legal.length === 0) {
       throw new Error(`stuck: no legal actions for seat ${seat} at step ${step}`);
     }
-    const action = await dumbAI.play(view, legal);
+    const action = await basicAI.play(view, legal);
     actionLog.push(action);
     state = reduce(state, action, rules);
     await saveCurrentGame({
@@ -95,14 +95,14 @@ async function main(): Promise<void> {
       {
         seatId: 0,
         kind: 'ai',
-        displayName: 'Dumb 0',
-        ai: { id: dumbAI.id, version: dumbAI.version },
+        displayName: 'Basic 0',
+        ai: { id: basicAI.id, version: basicAI.version },
       },
       {
         seatId: 1,
         kind: 'ai',
-        displayName: 'Dumb 1',
-        ai: { id: dumbAI.id, version: dumbAI.version },
+        displayName: 'Basic 1',
+        ai: { id: basicAI.id, version: basicAI.version },
       },
     ],
     actionLog,

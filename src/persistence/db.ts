@@ -10,7 +10,7 @@
 import { UseStore, createStore, del, get, keys, set } from 'idb-keyval';
 import type { Action } from '@/engine/actions';
 import type { GameState } from '@/engine/state';
-import type { GameRecord } from './records';
+import type { GameRecord, PlayerConfig } from './records';
 
 const CURRENT_DB = 'mille-bornes-current';
 const COMPLETED_DB = 'mille-bornes-completed';
@@ -42,6 +42,10 @@ export type CurrentGameSnapshot = {
   readonly seed: number;
   readonly ruleIds: ReadonlyArray<string>;
   readonly startedAt: string;
+  // Optional for backward compatibility with snapshots saved before the
+  // per-seat AI selector. Game store falls back to current settings when
+  // absent.
+  readonly playerConfigs?: ReadonlyArray<PlayerConfig>;
 };
 
 const CURRENT_KEY = 'current';

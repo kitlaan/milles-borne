@@ -6,6 +6,7 @@
 // a migration when new required fields land.
 
 import { ref, watch } from 'vue';
+import { AI_LIBRARY, DEFAULT_AI_ID } from '@/ai';
 import { OPTIONAL_RULE_IDS } from '@/engine/rules';
 import { DEFAULT_THEME_ID } from '@/ui/themes';
 import type { CardBackId, ThemeId } from '@/ui/themes/types';
@@ -22,6 +23,8 @@ export type Settings = {
   /** Optional rule plugin ids the user has opted in. Core rules are
    *  always active and are not represented here. */
   readonly enabledRuleIds: ReadonlyArray<string>;
+  /** AI player id used for non-human seats in solo mode. */
+  readonly aiId: string;
 };
 
 function defaultEnabledRuleIds(): ReadonlyArray<string> {
@@ -38,7 +41,13 @@ function defaults(): Settings {
     cardBackId: 'theme',
     colorMode: 'auto',
     enabledRuleIds: defaultEnabledRuleIds(),
+    aiId: DEFAULT_AI_ID,
   };
+}
+
+function sanitizeAiId(id: string | undefined): string {
+  if (id && AI_LIBRARY[id]) return id;
+  return DEFAULT_AI_ID;
 }
 
 function loadInitial(): Settings {
@@ -54,6 +63,7 @@ function loadInitial(): Settings {
       cardBackId: parsed.cardBackId ?? 'theme',
       colorMode: parsed.colorMode ?? 'auto',
       enabledRuleIds: sanitizeEnabledRuleIds(parsed.enabledRuleIds),
+      aiId: sanitizeAiId(parsed.aiId),
     };
   } catch {
     return defaults();
@@ -99,6 +109,9 @@ export function useSettings() {
     },
     setColorMode(mode: ColorMode): void {
       settings.value = { ...settings.value, colorMode: mode };
+    },
+    setAiId(id: string): void {
+      settings.value = { ...settings.value, aiId: sanitizeAiId(id) };
     },
     setEnabledRuleIds(ids: ReadonlyArray<string>): void {
       settings.value = {
