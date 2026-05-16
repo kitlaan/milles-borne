@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "name": "heuristic-selfplay",
+  "numGames": 2000,
+  "seedBase": 20260516,
+  "ai": {
+    "id": "heuristic",
+    "version": "0.1.0"
+  },
+  "ruleIds": ["core", "coup-fourre", "standard-bonuses"]
+}

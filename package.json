@@ -10,10 +10,11 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "eslint \"src/**/*.{ts,vue}\"",
+    "lint": "eslint \"src/**/*.{ts,vue}\" \"scripts/**/*.ts\"",
     "typecheck": "tsc --noEmit",
     "cli:play": "tsx src/cli/play.ts",
-    "cli:verify": "tsx src/cli/verify.ts"
+    "cli:verify": "tsx src/cli/verify.ts",
+    "generate-training-data": "tsx scripts/generate-training-data.ts"
   },
   "dependencies": {
     "idb-keyval": "^6.2.1",
