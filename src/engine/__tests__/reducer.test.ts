@@ -62,11 +62,19 @@ describe('reducer — DRAW', () => {
     expect(after.phase).toBe('action');
   });
 
-  it('with empty deck, advances to action phase without drawing', () => {
-    const state = makeState({ phase: 'draw', deck: [] });
+  it('with empty deck but non-empty hand, advances to action phase without drawing', () => {
+    // The seat still has at least one card to play / discard, so the
+    // engine moves to the action phase. Empty-hand + empty-deck takes
+    // a separate path (covered in scenarios.test.ts).
+    const held = makeCard('mile-25');
+    const state = makeState({
+      phase: 'draw',
+      deck: [],
+      seats: [blankSeat(0, [held]), blankSeat(1)],
+    });
     const after = reduce(state, { seat: 0, type: 'DRAW' }, rules);
     expect(after.phase).toBe('action');
-    expect(after.seats[0]!.hand).toEqual([]);
+    expect(after.seats[0]!.hand).toEqual([held]);
   });
 
   it('rejects DRAW when phase is action', () => {

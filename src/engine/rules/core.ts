@@ -180,8 +180,15 @@ function apply(action: Action, state: GameState): GameState | null {
 
 function applyDraw(action: Action & { type: 'DRAW' }, state: GameState): GameState {
   const seat = state.seats[action.seat]!;
-  // If deck empty, just advance to action phase without drawing.
   if (state.deck.length === 0) {
+    // Deck exhausted. If this seat also has an empty hand they can do
+    // nothing in the action phase — sitting on phase 'action' with no
+    // legal moves would deadlock. Route through endTurn so the
+    // "all hands empty + deck empty" detector finishes the hand, or so
+    // play continues with a seat that still holds cards.
+    if (seat.hand.length === 0) {
+      return endTurn(state);
+    }
     return { ...state, phase: 'action' };
   }
   const [drawn, ...restDeck] = state.deck;

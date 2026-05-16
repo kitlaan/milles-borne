@@ -256,6 +256,49 @@ describe('Hand-end via deck exhaustion', () => {
     expect(sumDistance(after.seats[0]!)).toBe(25);
   });
 
+  it('DRAW with empty deck + empty hand advances to next seat instead of deadlocking', () => {
+    // Regression: seat 0 used to land in phase 'action' with no hand and
+    // no deck, leaving zero legal actions (deadlock). With the fix the
+    // engine routes through endTurn so play advances to seat 1.
+    const mile = makeCard('mile-25');
+    const state = makeState({
+      phase: 'draw',
+      deck: [],
+      seats: [
+        {
+          id: 0,
+          hand: [],
+          tableau: { battle: [makeCard('remedy-roll')], speed: [], distance: [], safeties: [] },
+        },
+        {
+          id: 1,
+          hand: [mile],
+          tableau: { battle: [makeCard('remedy-roll')], speed: [], distance: [], safeties: [] },
+        },
+      ],
+      currentSeat: 0,
+    });
+    const after = reduce(state, { seat: 0, type: 'DRAW' }, rules);
+    expect(after.phase).toBe('draw');
+    expect(after.currentSeat).toBe(1);
+    expect(legalActions(after, 1, rules)).toEqual([{ seat: 1, type: 'DRAW' }]);
+  });
+
+  it('DRAW with empty deck + all hands empty ends the hand instead of deadlocking', () => {
+    // Both seats already exhausted, deck empty: a draw from seat 0 should
+    // close the hand via the "all hands empty + deck empty" detector
+    // rather than entering action phase with no legal moves.
+    const state = makeState({
+      phase: 'draw',
+      deck: [],
+      seats: [blankSeat(0), blankSeat(1)],
+      currentSeat: 0,
+    });
+    const after = reduce(state, { seat: 0, type: 'DRAW' }, rules);
+    expect(after.phase).toBe('ended');
+    expect(after.winnerSeat).toBeNull();
+  });
+
   it('full createInitialState game can be played to ended phase deterministically', () => {
     // Smoke test via the first-legal policy — should always terminate.
     let state = createInitialState({ seats: 2, rules, seed: 1 });
