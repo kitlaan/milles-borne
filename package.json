@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "cli:play": "tsx src/cli/play.ts",
     "cli:verify": "tsx src/cli/verify.ts",
-    "generate-training-data": "tsx scripts/generate-training-data.ts"
+    "generate-training-data": "tsx scripts/generate-training-data.ts",
+    "train": "tsx scripts/train.ts"
   },
   "dependencies": {
     "idb-keyval": "^6.2.1",
