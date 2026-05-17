@@ -80,8 +80,20 @@ function applyCoupFourre(
   const seat = state.seats[action.seat]!;
   const safetyCard = findInHand(seat, action.safetyCardId)!;
 
-  // Pop the cancelled hazard from victim's battle pile.
-  const newBattle = seat.tableau.battle.slice(0, -1);
+  // Pop the cancelled hazard from wherever core.apply placed it. Per
+  // core's hazard-placement logic, speed-limit hazards land on the
+  // speed pile; every other hazard lands on the battle pile. Popping
+  // the wrong pile loses an unrelated card AND leaves the hazard
+  // duplicated (it would persist on its real pile while also being
+  // pushed to discard below).
+  const hazType = hazardOf(awaiting.hazard.type);
+  let newBattle = seat.tableau.battle;
+  let newSpeed = seat.tableau.speed;
+  if (hazType === 'speed-limit') {
+    newSpeed = seat.tableau.speed.slice(0, -1);
+  } else {
+    newBattle = seat.tableau.battle.slice(0, -1);
+  }
   // Bank the safety with Coup-Fourré flag.
   const newSafeties: ReadonlyArray<SafetyEntry> = [
     ...seat.tableau.safeties,
@@ -100,7 +112,12 @@ function applyCoupFourre(
   const newSeats = replaceSeat(state.seats, action.seat, {
     ...seat,
     hand: newHand,
-    tableau: { ...seat.tableau, battle: newBattle, safeties: newSafeties },
+    tableau: {
+      ...seat.tableau,
+      battle: newBattle,
+      speed: newSpeed,
+      safeties: newSafeties,
+    },
   });
 
   return {

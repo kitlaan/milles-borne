@@ -172,6 +172,57 @@ describe('Coup-Fourré', () => {
     expect(after.awaiting).toBeNull();
   });
 
+  it('Right-of-Way CF against speed-limit pops the speed pile (not battle)', () => {
+    // Regression for the pre-Phase-10 engine bug: applyCoupFourre always
+    // popped the battle pile, but speed-limit hazards land on the speed
+    // pile. The bug duplicated the speed-limit card (left it on speed +
+    // pushed to discard) and silently dropped whatever sat on top of
+    // battle.
+    const roll = makeCard('remedy-roll');
+    const speedLimit = makeCard('hazard-speed-limit');
+    const right = makeCard('safety-right-of-way');
+    const replacement = makeCard('mile-25', 'replace');
+    const state = makeState({
+      phase: 'awaiting-response',
+      deck: [replacement],
+      currentSeat: 1,
+      awaiting: { seat: 1, reason: 'coup-fourre-response', hazard: speedLimit, attacker: 0 },
+      seats: [
+        { id: 0, hand: [], tableau: { battle: [], speed: [], distance: [], safeties: [] } },
+        {
+          id: 1,
+          hand: [right],
+          tableau: { battle: [roll], speed: [speedLimit], distance: [], safeties: [] },
+        },
+      ],
+    });
+    const after = reduce(
+      state,
+      { seat: 1, type: 'COUP_FOURRE', safetyCardId: right.id },
+      rules,
+    );
+    // Battle pile untouched (roll still on top).
+    expect(after.seats[1]!.tableau.battle).toEqual([roll]);
+    // Speed pile popped — the speed-limit is gone from there.
+    expect(after.seats[1]!.tableau.speed).toEqual([]);
+    // Hazard moved to discard, exactly once.
+    expect(after.discard).toEqual([speedLimit]);
+    // Total card identity preserved: every card from the input state
+    // appears exactly once across the output state's piles + hand + deck.
+    const allIds = [
+      ...after.seats.flatMap((s) => [
+        ...s.hand.map((c) => c.id),
+        ...s.tableau.battle.map((c) => c.id),
+        ...s.tableau.speed.map((c) => c.id),
+        ...s.tableau.distance.map((c) => c.id),
+        ...s.tableau.safeties.map((e) => e.card.id),
+      ]),
+      ...after.discard.map((c) => c.id),
+      ...after.deck.map((c) => c.id),
+    ];
+    expect(new Set(allIds).size).toBe(allIds.length);
+  });
+
   it('PASS_COUP_FOURRE leaves hazard in place and victim takes turn normally', () => {
     const roll = makeCard('remedy-roll');
     const accident = makeCard('hazard-accident');
