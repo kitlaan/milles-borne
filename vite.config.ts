@@ -26,6 +26,13 @@ function readGitCommit(): string {
 }
 
 export default defineConfig({
+  // Relative asset paths in the built index.html — lets the bundle work
+  // from any subpath (GitHub Pages user.github.io/milles-borne/), from a
+  // local file:// open, and from any static host without needing to know
+  // the deployment root. Switch back to '/' if HTML5 history routing
+  // with deep URLs gets introduced (relative paths would resolve under
+  // the deep route and 404).
+  base: './',
   plugins: [vue()],
   resolve: {
     alias: {
