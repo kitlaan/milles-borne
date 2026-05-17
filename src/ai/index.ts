@@ -7,6 +7,7 @@
 
 import { basicAI } from './basic';
 import { heuristicAI } from './heuristic';
+import { mlpAI } from './ml-mlp';
 import type { AIPlayerInfo } from './types';
 
 export * from './types';
@@ -14,6 +15,7 @@ export * from './types';
 export const AI_LIBRARY: Readonly<Record<string, AIPlayerInfo>> = Object.freeze({
   [basicAI.id]: basicAI,
   [heuristicAI.id]: heuristicAI,
+  [mlpAI.id]: mlpAI,
 });
 
 export const DEFAULT_AI_ID: string = heuristicAI.id;
@@ -38,4 +40,4 @@ export function aiRegistry(): ReadonlyArray<{ id: string; displayName: string; v
   }));
 }
 
-export { basicAI, heuristicAI };
+export { basicAI, heuristicAI, mlpAI };
