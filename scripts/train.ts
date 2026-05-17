@@ -59,6 +59,11 @@ type ReplayRow = { readonly seed: number; readonly actionLog: ReadonlyArray<Acti
 type Sample = {
   readonly features: number[];
   readonly target: number;
+  // Boolean mask (Uint8Array of length ACTION_VOCAB_SIZE) — 1 at slots
+  // that have a legal action in this state. The training loss uses a
+  // masked softmax so capacity is spent on legal-slot competition,
+  // not on suppressing always-illegal slots.
+  readonly legalMask: Uint8Array;
 };
 
 type TrainArgs = {
@@ -180,7 +185,12 @@ function extractSamples(
       const view = toSeatView(state, seat);
       const slot = encodeActionSlot(action, view.self.hand);
       if (slot !== null) {
-        samples.push({ features: encodeFeatures(view), target: slot });
+        const legalMask = new Uint8Array(ACTION_VOCAB_SIZE);
+        for (const a of legal) {
+          const s = encodeActionSlot(a, view.self.hand);
+          if (s !== null) legalMask[s] = 1;
+        }
+        samples.push({ features: encodeFeatures(view), target: slot, legalMask });
       }
     }
     state = reduce(state, action, rules);
@@ -239,16 +249,27 @@ function shuffleInPlace<T>(arr: T[], rng: ReturnType<typeof makeRng>): void {
   }
 }
 
-// Stable softmax: shift logits by max before exp, then normalize.
-function softmax(logits: ReadonlyArray<number>): number[] {
+// Stable masked softmax: only legal slots (mask[i] !== 0) participate
+// in the normalization. Illegal slots receive probability 0, so the
+// downstream backprop step `dz = probs - one_hot(target)` zeroes their
+// gradient — capacity flows only into the legal-slot competition,
+// which is what inference will see.
+function maskedSoftmax(
+  logits: ReadonlyArray<number>,
+  mask: Uint8Array,
+): number[] {
   let max = Number.NEGATIVE_INFINITY;
-  for (const v of logits) if (v > max) max = v;
-  const out = new Array<number>(logits.length);
+  for (let i = 0; i < logits.length; i++) {
+    if (mask[i] && logits[i]! > max) max = logits[i]!;
+  }
+  const out = new Array<number>(logits.length).fill(0);
   let sum = 0;
   for (let i = 0; i < logits.length; i++) {
-    const e = Math.exp(logits[i]! - max);
-    out[i] = e;
-    sum += e;
+    if (mask[i]) {
+      const e = Math.exp(logits[i]! - max);
+      out[i] = e;
+      sum += e;
+    }
   }
   for (let i = 0; i < out.length; i++) out[i] = out[i]! / sum;
   return out;
@@ -289,8 +310,10 @@ function forwardBackwardOne(
     }
   }
 
-  // Loss: cross-entropy of softmax over last-layer logits.
-  const probs = softmax(act[L]!);
+  // Loss: cross-entropy of *masked* softmax over last-layer logits.
+  // Only legal slots contribute to the normalization; illegal slots
+  // get probability 0 and therefore zero gradient.
+  const probs = maskedSoftmax(act[L]!, sample.legalMask);
   const target = sample.target;
   const loss = -Math.log(Math.max(1e-12, probs[target]!));
 
@@ -534,7 +557,7 @@ async function main(): Promise<void> {
     `Initializing weights | input=${FEATURE_DIM} hidden=[${args.hiddenDims.join(',')}] output=${ACTION_VOCAB_SIZE}`,
   );
   const weights = initWeights(
-    'mlp-v1',
+    'mlp-v2',
     FEATURE_DIM,
     args.hiddenDims,
     ACTION_VOCAB_SIZE,

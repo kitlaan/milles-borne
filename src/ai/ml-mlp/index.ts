@@ -17,7 +17,9 @@ const mlpPlay: AIPlayer = async (view, legal) =>
 
 export const mlpAI: AIPlayerInfo = {
   id: 'mlp',
-  displayName: 'MLP (Imitation v1)',
+  // displayName derives from the weights version so the picker reflects
+  // which model the bundled weights came from (mlp-v2 = masked-CE).
+  displayName: `MLP (Imitation ${weights.version})`,
   version: weights.version,
   play: mlpPlay,
 };

@@ -17,8 +17,12 @@ function actingSeat(state: GameState): number {
 describe('mlpAI', () => {
   it('id, displayName, and version are set', () => {
     expect(mlpAI.id).toBe('mlp');
-    expect(mlpAI.displayName).toBe('MLP (Imitation v1)');
-    expect(mlpAI.version).toBe('mlp-v1');
+    // displayName tracks weights.version (mlp-v1, mlp-v2, ...) so the
+    // picker shows the model that's actually loaded. Just assert the
+    // shape rather than pinning the suffix — that way a retrain doesn't
+    // break this test.
+    expect(mlpAI.displayName).toMatch(/^MLP \(Imitation mlp-v\d+\)$/);
+    expect(mlpAI.version).toMatch(/^mlp-v\d+$/);
   });
 
   it('always returns a legal action across multiple seeds', async () => {
