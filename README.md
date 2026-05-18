@@ -1,6 +1,6 @@
 # Mille Bornes
 
-A browser-based implementation of the [Mille Bornes](https://en.wikipedia.org/wiki/Mille_Bornes) card game. Client-only — Vue 3 + Vite + TypeScript, hosted as static files. Save / resume, high scores, pluggable AI engines (including a hand-rolled MLP trained on Heuristic self-play), pluggable rule variants, themeable cards.
+A browser-based implementation of the [Mille Bornes](https://en.wikipedia.org/wiki/Mille_Bornes) card game. Client-only — Vue 3 + Vite + TypeScript, hosted as static files. Save / resume, high scores, pluggable AI engines (hand-rolled MLP trained on Heuristic self-play; determinized Monte Carlo Tree Search), pluggable rule variants, themeable cards.
 
 ## Stack
 
@@ -76,13 +76,14 @@ Settings → Optional Rules picks up new entries automatically.
 
 ## Adding an AI
 
-AI plugins live in `src/ai/`. Three exist today:
+AI plugins live in `src/ai/`. Four exist today:
 
 | AI         | id          | Approach                                                       |
 | ---------- | ----------- | -------------------------------------------------------------- |
 | Basic      | `basic`     | Priority list (safety → remedy → highest mile → hazard → discard) |
 | Heuristic  | `heuristic` | Smarter: winning-move detection, mile timing, CF holding logic  |
 | MLP        | `mlp`       | 53→64→64→41 MLP, trained via supervised imitation of Heuristic  |
+| MCTS       | `mcts`      | Determinized Monte Carlo Tree Search; Heuristic as rollout policy, K samples × N rollouts per decision |
 
 To add a new AI:
 
@@ -117,8 +118,26 @@ This regenerates the training data + weights from scratch and byte-compares agai
 
 The MLP is intentionally hand-rolled (no TF.js / ONNX): the forward pass is ~50 LOC of matrix-multiply + ReLU, the training script's backprop + SGD-with-momentum is straightforward to read. If the model grows beyond a tiny MLP, a real ML library makes sense — until then, every line of the inference path is auditable.
 
+### MCTS (the search AI)
+
+Hand-rolled determinized Monte Carlo Tree Search. No training, no weights file — purely runtime search.
+
+- `src/engine/sample.ts` — given a `SeatView`, samples a plausible full `GameState` (random partition of unseen cards into opponents' hidden hands + deck).
+- `src/ai/mcts/search.ts` — UCB1 tree search; forced single-action chains (DRAW phases) are collapsed into the parent decision via `fastForward`, so iterations land on real choices.
+- `src/ai/mcts/rollout.ts` — heuristic-vs-heuristic rollout to terminal as the leaf evaluator. The state's deck is reshuffled per rollout (the engine reducer doesn't consume `state.rng` during play, so without reshuffling all rollouts from a sampled leaf collapse to the same outcome).
+- `src/ai/mcts/determinize.ts` — K independent trees, one per sampled determinization, with visit counts summed across them. Discarding a safety is strictly dominated, so those actions are pre-filtered before the search sees them.
+
+Tuning knobs via `makeMctsAI({ K, N, ucbC, maxRolloutDepth, seed })`. Defaults (K=4, N=100) are calibrated for snappy browser play. Strength evaluation uses `scripts/eval-mcts.ts` (subprocess worker pool, scales to `availableParallelism() - 1`). Reference numbers from this branch:
+
+| Config          | vs Heuristic, n=200 same-seed                  |
+| --------------- | ---------------------------------------------- |
+| K=8, N=200      | 86W / 47L / 67D — 64.7% of decided (≥ ADR 004 target of 60%) |
+
+The 67 draws are hands where the deck empties before anyone hits 1000; engine scoring counts those as no-winner regardless of who is ahead.
+
 ## ADRs
 
 - [ADR 001 — PlayerConfig as discriminated union](plans/001-player-config-discriminated-union.md)
 - [ADR 002 — Drop `Card.value`; derive from type](plans/002-drop-card-value-field.md)
+- [ADR 004 — RL experiments summary + retirement of hand-rolled ml-rl](plans/004-rl-experiments-summary.md)
 - [Master plan](plans/00-master-plan.md) (immutable; ADRs supersede where they conflict)

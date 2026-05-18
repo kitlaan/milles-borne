@@ -13,9 +13,16 @@ export type OtherSeatView = {
 // The information visible to a single seat — what an AI player or a UI
 // rendering that seat's perspective should see. Engine code never exposes
 // `GameState` directly to AI implementations; it goes through this view.
+//
+// `discard` is the full discard pile (oldest at index 0, most-recent at
+// the end). It is public information per Mille Bornes rules; an AI that
+// needs to reason about what cards have been seen (e.g. an MCTS sampler
+// reconstructing the unseen-card pool) reads it here. `discardTop` is
+// retained as a convenience alias for the most-recent discard.
 export type SeatView = {
   readonly self: Seat;
   readonly others: ReadonlyArray<OtherSeatView>;
+  readonly discard: ReadonlyArray<Card>;
   readonly discardTop: Card | null;
   readonly deckSize: number;
   readonly phase: Phase;
@@ -43,6 +50,7 @@ export function toSeatView(state: GameState, viewerSeat: number): SeatView {
   return {
     self,
     others,
+    discard,
     discardTop,
     deckSize: state.deck.length,
     phase: state.phase,

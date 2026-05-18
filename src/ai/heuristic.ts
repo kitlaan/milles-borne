@@ -28,7 +28,14 @@ import type { AIPlayer, AIPlayerInfo } from './types';
 
 const LATE_GAME_DECK_SIZE = 12;
 
-const heuristicPlay: AIPlayer = async (view, legal) => {
+// Sync core. Exported so callers on a hot path (e.g. MCTS rollouts at
+// ~80 actions × K×N simulations per decision) can skip the
+// async/microtask wrapper. The plugin-facing `heuristicPlay` is just a
+// thin Promise wrapper around this.
+export function chooseHeuristicAction(
+  view: SeatView,
+  legal: ReadonlyArray<Action>,
+): Action {
   if (legal.length === 0) {
     throw new Error('heuristic AI: no legal actions available');
   }
@@ -101,7 +108,10 @@ const heuristicPlay: AIPlayer = async (view, legal) => {
   }
 
   return legal[0]!;
-};
+}
+
+const heuristicPlay: AIPlayer = async (view, legal) =>
+  chooseHeuristicAction(view, legal);
 
 // Score a mile play. Higher = better. Negative = avoid.
 function mileScore(value: number, remaining: number): number {

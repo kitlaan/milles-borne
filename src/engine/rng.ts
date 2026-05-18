@@ -48,15 +48,29 @@ export function nextInt(rng: RngState, max: number): [number, RngState] {
 }
 
 // Immutable Fisher-Yates shuffle. Returns shuffled copy + advanced RNG.
+//
+// The naive `shuffle` is `nextInt` in a loop, which is O(stepCount) per
+// call and O(stepCount²) over the whole shuffle. That was fine for
+// once-per-game setup shuffles, but MCTS rollouts can call `shuffle`
+// thousands of times per decision against an ever-growing `stepCount`,
+// making the rest of the search look 50-100× slower than the underlying
+// cost of `reduce`. Here we instantiate the generator once, fast-
+// forward it to `stepCount` exactly once, then call `unsafeNext` O(1)
+// per swap. The returned `RngState` carries the exact same total
+// stepCount as the loop version, so determinism is preserved.
 export function shuffle<T>(arr: ReadonlyArray<T>, rng: RngState): [T[], RngState] {
   const result = [...arr];
-  let state = rng;
+  if (result.length <= 1) return [result, rng];
+  const gen = xoroshiro128plus(rng.seed);
+  for (let i = 0; i < rng.stepCount; i++) gen.unsafeNext();
+  let stepsUsed = 0;
   for (let i = result.length - 1; i > 0; i--) {
-    const [j, next] = nextInt(state, i + 1);
-    state = next;
+    const v = gen.unsafeNext() >>> 0;
+    stepsUsed++;
+    const j = v % (i + 1);
     const tmp = result[i]!;
     result[i] = result[j]!;
     result[j] = tmp;
   }
-  return [result, state];
+  return [result, { seed: rng.seed, stepCount: rng.stepCount + stepsUsed }];
 }

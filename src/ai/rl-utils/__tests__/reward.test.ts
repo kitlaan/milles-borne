@@ -19,6 +19,7 @@ function makeView(hand: ReadonlyArray<Card>): SeatView {
   return {
     self: { id: 0, hand, tableau: { battle: [], speed: [], distance: [], safeties: [] } },
     others: [],
+    discard: [],
     discardTop: null,
     deckSize: 0,
     phase: 'action',
