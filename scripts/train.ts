@@ -7,8 +7,8 @@
 // with momentum to minimize cross-entropy over the action vocabulary.
 //
 // Outputs:
-//   src/ai/ml-mlp/weights.json   — committed, loaded by the AI plugin
-//   src/ai/ml-mlp/report.json    — committed, captures quality metrics so
+//   src/ai/ml-mlp/weights-v2.json — committed, loaded by the AI plugin
+//   src/ai/ml-mlp/report-v2.json  — committed, captures quality metrics so
 //                                   PR diffs surface drift
 //
 // Determinism: weight init, sample shuffle, and train/eval split are all
@@ -86,8 +86,8 @@ function parseArgs(argv: ReadonlyArray<string>): TrainArgs {
   const args: TrainArgs = {
     manifestPath: join(REPO_ROOT, 'training-data', 'manifest.json'),
     jsonlPath: null,
-    weightsOut: join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'weights.json'),
-    reportOut: join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'report.json'),
+    weightsOut: join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'weights-v2.json'),
+    reportOut: join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'report-v2.json'),
     epochs: 15,
     batchSize: 64,
     lr: 0.01,

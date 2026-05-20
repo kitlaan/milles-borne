@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "mcts-selfplay-smoke",
+  "numGames": 4,
+  "seedBase": 1,
+  "ai": {
+    "id": "mcts",
+    "version": "0.1.0"
+  },
+  "ruleIds": ["core", "coup-fourre", "standard-bonuses"],
+  "mcts": {
+    "K": 2,
+    "N": 20,
+    "ucbC": 1.4142135623730951
+  }
+}

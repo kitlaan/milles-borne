@@ -74,3 +74,56 @@ export function shuffle<T>(arr: ReadonlyArray<T>, rng: RngState): [T[], RngState
   }
   return [result, { seed: rng.seed, stepCount: rng.stepCount + stepsUsed }];
 }
+
+// Stateful PRNG wrapper for hot loops. The plain `nextInt` / `shuffle`
+// pair is O(stepCount) per call because the generator is rebuilt from
+// seed and fast-forwarded each time — fine for engine setup, but in
+// tight loops like MCTS rollouts where the same RngState advances
+// thousands of times in a row, cumulative cost goes quadratic.
+//
+// `FastRng` materializes the generator once (paying the fast-forward
+// in the constructor) and then advances it in place with O(1) per
+// step. The output sequence is bit-identical to threading `nextInt` /
+// `shuffle` through immutable RngState updates with the same starting
+// seed + stepCount, so determinism is preserved.
+//
+// Use this for MCTS-internal randomness only. Engine state still
+// threads `RngState` through reducers; the immutable model is the
+// right one when the random calls are not in a hot loop.
+export class FastRng {
+  private readonly seed: number;
+  private readonly gen: ReturnType<typeof xoroshiro128plus>;
+  private currentStepCount: number;
+
+  constructor(rng: RngState) {
+    this.seed = rng.seed;
+    this.gen = xoroshiro128plus(rng.seed);
+    for (let i = 0; i < rng.stepCount; i++) this.gen.unsafeNext();
+    this.currentStepCount = rng.stepCount;
+  }
+
+  nextInt(max: number): number {
+    if (!Number.isInteger(max) || max <= 0) {
+      throw new Error(`FastRng.nextInt: max must be a positive integer, got ${max}`);
+    }
+    this.currentStepCount++;
+    return (this.gen.unsafeNext() >>> 0) % max;
+  }
+
+  shuffleInto<T>(arr: ReadonlyArray<T>): T[] {
+    const result = [...arr];
+    for (let i = result.length - 1; i > 0; i--) {
+      const j = this.nextInt(i + 1);
+      const tmp = result[i]!;
+      result[i] = result[j]!;
+      result[j] = tmp;
+    }
+    return result;
+  }
+
+  // Snapshot of the wrapped state. Useful when handing the stream
+  // back to code that wants the immutable `RngState` view.
+  state(): RngState {
+    return { seed: this.seed, stepCount: this.currentStepCount };
+  }
+}

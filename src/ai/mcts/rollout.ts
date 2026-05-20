@@ -11,7 +11,7 @@
 
 import { legalActions } from '@/engine/legal';
 import { reduce } from '@/engine/reducer';
-import { shuffle, type RngState } from '@/engine/rng';
+import { FastRng, type RngState } from '@/engine/rng';
 import type { GameState } from '@/engine/state';
 import type { RulePlugin } from '@/engine/rules/types';
 import { toSeatView } from '@/engine/view';
@@ -33,15 +33,23 @@ export type HeuristicRolloutOptions = {
 // determinized leaf state's future is fully deterministic. Without
 // reshuffling, every rollout through a given root child collapses to
 // the same outcome and MCTS sees no signal across actions. Reshuffling
-// `state.deck` per rollout — using the external `rng` parameter —
-// gives each rollout a fresh future draw order while keeping the
-// known visible state intact.
+// `state.deck` per rollout — using a `FastRng` instance threaded
+// through the closure — gives each rollout a fresh future draw order
+// while keeping the known visible state intact.
+//
+// The FastRng is lazy-initialized from the first `rng` parameter the
+// rolloutPolicy receives. Subsequent calls advance the same generator
+// in place (O(1) per step). This avoids the O(stepCount²) cost of
+// rebuilding+fast-forwarding the engine's immutable RngState on every
+// rollout — at the scale of K×N rollouts per decision × thousands of
+// decisions per game, that cost dominates everything else.
 //
 // `maxDepth` is a belt-and-suspenders cap against engine livelock.
 export function makeHeuristicRollout(
   opts: HeuristicRolloutOptions = {},
 ): RolloutPolicy {
   const maxDepth = opts.maxDepth ?? DEFAULT_MAX_DEPTH;
+  let fastRng: FastRng | null = null;
 
   return (
     state: GameState,
@@ -49,16 +57,16 @@ export function makeHeuristicRollout(
     rootSeat: number,
     rules: ReadonlyArray<RulePlugin>,
   ): [number, RngState] => {
-    const [shuffledDeck, rngAfter] = shuffle(state.deck, rng);
+    if (!fastRng) fastRng = new FastRng(rng);
+    const shuffledDeck = fastRng.shuffleInto(state.deck);
     let cur: GameState = { ...state, deck: shuffledDeck };
-    let curRng = rngAfter;
     let depth = 0;
 
     while (cur.phase !== 'ended' && depth < maxDepth) {
       const seat = seatToMove(cur);
       const legal = legalActions(cur, seat, rules);
       if (legal.length === 0) {
-        return [0, curRng];
+        return [0, fastRng.state()];
       }
       const view = toSeatView(cur, seat);
       const action = chooseHeuristicAction(view, legal);
@@ -66,7 +74,7 @@ export function makeHeuristicRollout(
       depth += 1;
     }
 
-    return [terminalReward(cur, rootSeat), curRng];
+    return [terminalReward(cur, rootSeat), fastRng.state()];
   };
 }
 

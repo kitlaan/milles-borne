@@ -82,7 +82,7 @@ AI plugins live in `src/ai/`. Four exist today:
 | ---------- | ----------- | -------------------------------------------------------------- |
 | Basic      | `basic`     | Priority list (safety → remedy → highest mile → hazard → discard) |
 | Heuristic  | `heuristic` | Smarter: winning-move detection, mile timing, CF holding logic  |
-| MLP        | `mlp`       | 53→64→64→41 MLP, trained via supervised imitation of Heuristic  |
+| MLP        | `mlp`       | 53→64→64→41 MLP. v3 trained via supervised imitation of MCTS self-play (v2 was imitation of Heuristic; both files kept on disk) |
 | MCTS       | `mcts`      | Determinized Monte Carlo Tree Search; Heuristic as rollout policy, K samples × N rollouts per decision |
 
 To add a new AI:
@@ -93,30 +93,45 @@ To add a new AI:
 
 ### ML pipeline (the MLP AI)
 
-The MLP variant is a thin example of how an ML-trained AI plugs in. The training pipeline is reproducible end-to-end from committed inputs:
+The MLP variant is a thin example of how an ML-trained AI plugs in. Two trained variants ship today: v2 (imitation of Heuristic) and v3 (imitation of MCTS). The plugin loads v3 by default; v2 stays on disk for reproducibility and side-by-side eval.
 
 ```
-training-data/manifest.json   (committed — numGames, seedBase, ai, ruleIds)
+training-data/manifest.json        (committed — Heuristic v2 pipeline)
+training-data/manifest-mcts.json   (committed — MCTS v3 pipeline)
         │
-        │ npm run generate-training-data
+        │ npm run generate-training-data    (v2 path; serial)
+        │ tsx scripts/generate-mcts-data.ts (v3 path; parallel worker pool)
         ▼
-training-data/heuristic-selfplay.jsonl  (gitignored — Heuristic self-play replays)
+training-data/heuristic-selfplay.jsonl  (gitignored — v2 replays)
+training-data/mcts-selfplay.jsonl       (gitignored — v3 replays, 10k games × MCTS K=8 N=200)
         │
-        │ npm run train
+        │ npm run train --manifest=...  (same script, both pipelines)
         ▼
-src/ai/ml-mlp/weights.json    (committed — ~324 KB, ships with the bundle)
-src/ai/ml-mlp/report.json     (committed — train loss curve + eval metrics)
+src/ai/ml-mlp/weights-v2.json (committed — ~324 KB; v2 weights, kept for reproducibility)
+src/ai/ml-mlp/weights-v3.json (committed — ~324 KB; v3 weights, shipped with the bundle)
+src/ai/ml-mlp/report-v2.json
+src/ai/ml-mlp/report-v3.json
 ```
 
-To verify the committed weights still derive from the committed inputs + current code:
+To verify the committed v2 weights still derive from the v2 manifest + current code:
 
 ```sh
 npm run verify-weights
 ```
 
-This regenerates the training data + weights from scratch and byte-compares against the committed file. If it fails (engine, heuristic, feature encoder, or action vocab drifted), the script prints the exact `cp` commands to accept the new weights.
+This regenerates the training data + weights from scratch and byte-compares against the committed file. If it fails (engine, heuristic, feature encoder, or action vocab drifted), the script prints the exact `cp` commands to accept the new weights. v3 has no automated verify equivalent yet — its data generation runs MCTS at K=8 N=200 which is many wall-hours; verifying it would mean re-running that gen.
 
-The MLP is intentionally hand-rolled (no TF.js / ONNX): the forward pass is ~50 LOC of matrix-multiply + ReLU, the training script's backprop + SGD-with-momentum is straightforward to read. If the model grows beyond a tiny MLP, a real ML library makes sense — until then, every line of the inference path is auditable.
+Strength comparison (200 same-seed games per pairing, eval seat alternated):
+
+| matchup                | W   | L  | D  | win rate of decided |
+| ---------------------- | --- | -- | -- | ------------------- |
+| mlp-v3 vs Heuristic    | 122 | 39 | 39 | 75.8%               |
+| mlp-v3 vs mlp-v2       | 123 | 39 | 38 | 75.9%               |
+| mlp-v3 vs mctsAI(K=8,N=200) | 94  | 47 | 59 | 66.7%               |
+
+mlp-v3 beats both its predecessor (v2 at 47% vs Heuristic per ADR 004 → 76% for v3) and its own teacher (mctsAI at 64.7% vs Heuristic → 66.7% for v3 vs mctsAI). Why the student outperforms the teacher is unsurprising on reflection: the MLP averages over noisy per-game MCTS decisions and learns the systematic part of the teacher's policy without inheriting the per-determinization variance that costs MCTS individual games.
+
+The MLP itself is intentionally hand-rolled (no TF.js / ONNX): the forward pass is ~50 LOC of matrix-multiply + ReLU, the training script's backprop + SGD-with-momentum is straightforward to read. If the model grows beyond a tiny MLP, a real ML library makes sense — until then, every line of the inference path is auditable.
 
 ### MCTS (the search AI)
 

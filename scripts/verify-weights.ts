@@ -2,7 +2,7 @@
 //
 // Regenerates the training data + weights from scratch using the pinned
 // manifest and the current engine/AI/feature code, then byte-compares
-// the regenerated weights against the committed src/ai/ml-mlp/weights.json.
+// the regenerated weights against the committed src/ai/ml-mlp/weights-v2.json.
 //
 // Non-zero exit on drift; the caller (CI, pre-release, or a human bumping
 // the weights) should either accept the new file (cp the temp output over
@@ -22,7 +22,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const COMMITTED_WEIGHTS = join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'weights.json');
+const COMMITTED_WEIGHTS = join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'weights-v2.json');
 
 function runTsx(scriptPath: string, args: string[]): void {
   execFileSync('tsx', [scriptPath, ...args], { cwd: REPO_ROOT, stdio: 'inherit' });
@@ -56,8 +56,8 @@ function main(): void {
   console.error(`  regenerated: ${tmpWeights}  (${regen.length} bytes)`);
   console.error(`\nTo accept the new weights:`);
   console.error(`  cp "${tmpWeights}" "${COMMITTED_WEIGHTS}"`);
-  console.error(`  cp "${tmpReport}" "${join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'report.json')}"`);
-  console.error(`  git add src/ai/ml-mlp/weights.json src/ai/ml-mlp/report.json`);
+  console.error(`  cp "${tmpReport}" "${join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'report-v2.json')}"`);
+  console.error(`  git add src/ai/ml-mlp/weights-v2.json src/ai/ml-mlp/report-v2.json`);
   console.error(`  git commit -m "ml-mlp: refresh weights"`);
   process.exit(1);
 }

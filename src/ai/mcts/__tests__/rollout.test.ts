@@ -15,10 +15,14 @@ describe('makeHeuristicRollout', () => {
   });
 
   it('returns opposite-sign reward when viewed from the other seat', () => {
+    // Build two fresh rollouts so each gets its own FastRng seeded from
+    // the same starting point — the rollouts then trace the same game
+    // and the per-seat rewards must mirror.
     const state = createInitialState({ seats: 2, rules, seed: 1 });
-    const rollout = makeHeuristicRollout();
-    const [r0] = rollout(state, seedRng(0), 0, rules);
-    const [r1] = rollout(state, seedRng(0), 1, rules);
+    const r0Rollout = makeHeuristicRollout();
+    const r1Rollout = makeHeuristicRollout();
+    const [r0] = r0Rollout(state, seedRng(0), 0, rules);
+    const [r1] = r1Rollout(state, seedRng(0), 1, rules);
     if (r0 === 0) {
       expect(r1).toBe(0);
     } else {
@@ -26,12 +30,29 @@ describe('makeHeuristicRollout', () => {
     }
   });
 
-  it('is deterministic given identical initial state', () => {
+  it('is deterministic across factory instances given identical seed', () => {
+    // FastRng is lazy-initialized on the first call and intentionally
+    // advances across subsequent calls (that's the point — variance per
+    // rollout). Determinism is preserved across separate factory
+    // instances: same seed in → same first-call result out.
+    const state = createInitialState({ seats: 2, rules, seed: 1 });
+    const rolloutA = makeHeuristicRollout();
+    const rolloutB = makeHeuristicRollout();
+    const [a] = rolloutA(state, seedRng(0), 0, rules);
+    const [b] = rolloutB(state, seedRng(0), 0, rules);
+    expect(a).toBe(b);
+  });
+
+  it('produces variance across calls within a factory (FastRng advances)', () => {
     const state = createInitialState({ seats: 2, rules, seed: 1 });
     const rollout = makeHeuristicRollout();
-    const [a] = rollout(state, seedRng(0), 0, rules);
-    const [b] = rollout(state, seedRng(0), 0, rules);
-    expect(a).toBe(b);
+    const results: number[] = [];
+    for (let i = 0; i < 20; i++) {
+      const [r] = rollout(state, seedRng(0), 0, rules);
+      results.push(r);
+    }
+    const distinct = new Set(results);
+    expect(distinct.size).toBeGreaterThan(1);
   });
 
   it('respects maxDepth and returns 0 on a too-shallow cap', () => {

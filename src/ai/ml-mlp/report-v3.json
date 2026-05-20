@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "generated": {
+    "modelVersion": "mlp-v2",
+    "featureDim": 53,
+    "hiddenDims": [
+      64,
+      64
+    ],
+    "actionVocabSize": 41
+  },
+  "training": {
+    "manifestPath": "training-data/manifest-mcts.json",
+    "jsonlPath": "training-data/mcts-selfplay.jsonl",
+    "trainReplays": 9000,
+    "trainSamples": 823770,
+    "epochs": 15,
+    "batchSize": 64,
+    "lr": 0.01,
+    "momentum": 0.9,
+    "seed": 20260516,
+    "perEpochLoss": [
+      1.6650984723624291,
+      1.6101731519299953,
+      1.5915282350490148,
+      1.5827501087625695,
+      1.5767509218977958,
+      1.5722873474944243,
+      1.5691328139192784,
+      1.5663913649335808,
+      1.5640400568064832,
+      1.5620601402769547,
+      1.5602375135360678,
+      1.5585912795733807,
+      1.5573875434841606,
+      1.5562147799847057,
+      1.5547772734348966
+    ],
+    "finalLoss": 1.5547772734348966,
+    "trainSeconds": 328.259
+  },
+  "eval": {
+    "heldOutReplays": 1000,
+    "actionAgreement": 0.37374909197358863,
+    "actionAgreementN": 92233,
+    "winRateGames": 100,
+    "winRate": 0.71,
+    "winRateCompleted": 100,
+    "modelScoreSum": 146450,
+    "heuristicScoreSum": 95125
+  }
+}
