@@ -6,8 +6,5 @@ dist
 # CLI artifacts (game record dumps from cli:play)
 tmp/
 
-# Local working notes / ADRs — gitignored per project convention
-plans/
-
 # Per-user Claude Code settings (project-shared settings go in .claude/settings.json)
 .claude/settings.local.json

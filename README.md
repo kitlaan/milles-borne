@@ -51,7 +51,7 @@ Layers, top to bottom:
   src/cli/, scripts/     Node entry points (tsx).
 ```
 
-For the full design + phasing, see [`plans/00-master-plan.md`](plans/00-master-plan.md). ADRs in `plans/NNN-*.md` capture decisions that evolved out of the master plan.
+For the full design + phasing, see [`plans/000-master-plan.md`](plans/000-master-plan.md). ADRs in `plans/NNN-*.md` capture decisions that evolved out of the master plan.
 
 ## Adding a theme
 
@@ -152,7 +152,7 @@ The 67 draws are hands where the deck empties before anyone hits 1000; engine sc
 
 ## ADRs
 
+- [Master plan](plans/00-master-plan.md) (immutable; ADRs supersede where they conflict)
 - [ADR 001 — PlayerConfig as discriminated union](plans/001-player-config-discriminated-union.md)
 - [ADR 002 — Drop `Card.value`; derive from type](plans/002-drop-card-value-field.md)
 - [ADR 004 — RL experiments summary + retirement of hand-rolled ml-rl](plans/004-rl-experiments-summary.md)
-- [Master plan](plans/00-master-plan.md) (immutable; ADRs supersede where they conflict)
