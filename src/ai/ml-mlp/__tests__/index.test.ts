@@ -17,11 +17,11 @@ function actingSeat(state: GameState): number {
 describe('mlpAI', () => {
   it('id, displayName, and version are set', () => {
     expect(mlpAI.id).toBe('mlp');
-    // displayName tracks weights.version (mlp-v1, mlp-v2, ...) so the
-    // picker shows the model that's actually loaded. Just assert the
-    // shape rather than pinning the suffix — that way a retrain doesn't
-    // break this test.
-    expect(mlpAI.displayName).toMatch(/^MLP \(Imitation mlp-v\d+\)$/);
+    // displayName is hardcoded per bundled weights in the form
+    // `MLP (v<N>: <data source>)` (see src/ai/ml-mlp/index.ts). Assert
+    // the shape so iteration bumps / data-source swaps don't churn this
+    // test. version still tracks the weights.version arch tag.
+    expect(mlpAI.displayName).toMatch(/^MLP \(v\d+: .+\)$/);
     expect(mlpAI.version).toMatch(/^mlp-v\d+$/);
   });
 

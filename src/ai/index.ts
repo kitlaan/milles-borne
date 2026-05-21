@@ -20,7 +20,7 @@ export const AI_LIBRARY: Readonly<Record<string, AIPlayerInfo>> = Object.freeze(
   [mctsAI.id]: mctsAI,
 });
 
-export const DEFAULT_AI_ID: string = heuristicAI.id;
+export const DEFAULT_AI_ID: string = mlpAI.id;
 
 export function getAI(id: string): AIPlayerInfo | undefined {
   return AI_LIBRARY[id];
