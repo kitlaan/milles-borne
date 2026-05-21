@@ -16,8 +16,14 @@ export type MlpLayer = {
   readonly biases: ReadonlyArray<number>;
 };
 
+// Optional `featuresVersion` selects which encoder the inference path
+// will run when this weights file is loaded. v1 = original 53-dim
+// encoder (`features.ts`); v2 = extended 63-dim encoder
+// (`features-v2.ts`) used from mlp-v4 onward. Older weights files
+// omit the field; default to v1 so existing snapshots stay valid.
 export type MlpWeights = {
   readonly version: string;
+  readonly featuresVersion?: 1 | 2;
   readonly inputDim: number;
   readonly hiddenDims: ReadonlyArray<number>;
   readonly outputDim: number;

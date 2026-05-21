@@ -42,6 +42,7 @@ import {
   legalActionMask,
 } from '@/ai/ml-mlp/actions';
 import { FEATURE_DIM, encodeFeatures } from '@/ai/ml-mlp/features';
+import { FEATURE_DIM_V2, encodeFeaturesV2 } from '@/ai/ml-mlp/features-v2';
 import { type MlpLayer, type MlpWeights } from '@/ai/ml-mlp/forward';
 import { chooseActionFromModel } from '@/ai/ml-mlp/inference';
 
@@ -78,6 +79,7 @@ type TrainArgs = {
   seed: number;
   hiddenDims: number[];
   evalGames: number;
+  featuresVersion: 1 | 2;
 };
 
 const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -95,6 +97,7 @@ function parseArgs(argv: ReadonlyArray<string>): TrainArgs {
     seed: 20260516,
     hiddenDims: [64, 64],
     evalGames: 100,
+    featuresVersion: 1,
   };
   for (let i = 0; i < argv.length; i++) {
     const k = argv[i];
@@ -141,6 +144,14 @@ function parseArgs(argv: ReadonlyArray<string>): TrainArgs {
       case '--eval-games':
         args.evalGames = Number(need());
         break;
+      case '--features-version': {
+        const fv = Number(need());
+        if (fv !== 1 && fv !== 2) {
+          throw new Error(`--features-version must be 1 or 2, got ${fv}`);
+        }
+        args.featuresVersion = fv;
+        break;
+      }
       default:
         throw new Error(`unknown argument: ${k}`);
     }
@@ -175,9 +186,11 @@ function actingSeat(state: GameState): number {
 function extractSamples(
   row: ReplayRow,
   rules: ReturnType<typeof rulesFromIds>,
+  featuresVersion: 1 | 2,
 ): Sample[] {
   let state = createInitialState({ seats: 2, rules, seed: row.seed });
   const samples: Sample[] = [];
+  const encode = featuresVersion === 2 ? encodeFeaturesV2 : encodeFeatures;
   for (const action of row.actionLog) {
     const seat = actingSeat(state);
     const legal = legalActions(state, seat, rules);
@@ -190,7 +203,7 @@ function extractSamples(
           const s = encodeActionSlot(a, view.self.hand);
           if (s !== null) legalMask[s] = 1;
         }
-        samples.push({ features: encodeFeatures(view), target: slot, legalMask });
+        samples.push({ features: encode(view), target: slot, legalMask });
       }
     }
     state = reduce(state, action, rules);
@@ -220,6 +233,7 @@ function initWeights(
   hiddenDims: ReadonlyArray<number>,
   outputDim: number,
   seed: number,
+  featuresVersion: 1 | 2 = 1,
 ): MlpWeights {
   const rng = makeRng(seed);
   const dims: number[] = [inputDim, ...hiddenDims, outputDim];
@@ -236,7 +250,14 @@ function initWeights(
     }
     layers.push({ weights, biases: new Array<number>(out).fill(0) });
   }
-  return { version, inputDim, hiddenDims: [...hiddenDims], outputDim, layers };
+  return {
+    version,
+    featuresVersion,
+    inputDim,
+    hiddenDims: [...hiddenDims],
+    outputDim,
+    layers,
+  };
 }
 
 // In-place Fisher-Yates with the seeded RNG.
@@ -532,10 +553,17 @@ async function main(): Promise<void> {
   // also deterministic until the train RNG shuffles it below.
   const rng = makeRng(args.seed);
 
+  const inputDim = args.featuresVersion === 2 ? FEATURE_DIM_V2 : FEATURE_DIM;
+  const modelVersion = args.featuresVersion === 2 ? 'mlp-v4' : 'mlp-v2';
+
+  console.log(
+    `Features version: v${args.featuresVersion} (inputDim=${inputDim})`,
+  );
+
   console.log('Extracting samples...');
   let samples: Sample[] = [];
   for (const r of replays) {
-    samples.push(...extractSamples(r, rules));
+    samples.push(...extractSamples(r, rules, args.featuresVersion));
   }
   console.log(`  ${samples.length} samples (decision points with > 1 legal action)`);
 
@@ -548,20 +576,23 @@ async function main(): Promise<void> {
   const evalReplays = (replays as ReplayRow[]).slice(0, evalCount);
   const trainReplays = (replays as ReplayRow[]).slice(evalCount);
   samples = [];
-  for (const r of trainReplays) samples.push(...extractSamples(r, rules));
+  for (const r of trainReplays) {
+    samples.push(...extractSamples(r, rules, args.featuresVersion));
+  }
   console.log(
     `  train: ${trainReplays.length} games (${samples.length} samples) | eval: ${evalReplays.length} games`,
   );
 
   console.log(
-    `Initializing weights | input=${FEATURE_DIM} hidden=[${args.hiddenDims.join(',')}] output=${ACTION_VOCAB_SIZE}`,
+    `Initializing weights | input=${inputDim} hidden=[${args.hiddenDims.join(',')}] output=${ACTION_VOCAB_SIZE}`,
   );
   const weights = initWeights(
-    'mlp-v2',
-    FEATURE_DIM,
+    modelVersion,
+    inputDim,
     args.hiddenDims,
     ACTION_VOCAB_SIZE,
     args.seed,
+    args.featuresVersion,
   );
 
   console.log(
@@ -603,7 +634,8 @@ async function main(): Promise<void> {
     schemaVersion: 1,
     generated: {
       modelVersion: weights.version,
-      featureDim: FEATURE_DIM,
+      featureDim: inputDim,
+      featuresVersion: args.featuresVersion,
       hiddenDims: args.hiddenDims,
       actionVocabSize: ACTION_VOCAB_SIZE,
     },

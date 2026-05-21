@@ -24,6 +24,7 @@ import readline from 'node:readline';
 import { basicAI } from '@/ai/basic';
 import { heuristicAI } from '@/ai/heuristic';
 import { makeMctsAI } from '@/ai/mcts';
+import { makeMlpRollout } from '@/ai/mcts/rollout-mlp';
 import { makeMlpAI, mlpAI, parseWeights } from '@/ai/ml-mlp';
 import { legalActions } from '@/engine/legal';
 import { reduce } from '@/engine/reducer';
@@ -42,11 +43,11 @@ type Task = {
   readonly evalSeat: 0 | 1;
 };
 
-function loadMlpV2(): AIPlayerInfo {
-  const path = join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'weights-v2.json');
+function loadMlpFromPath(filename: string, id: string, label: string): AIPlayerInfo {
+  const path = join(REPO_ROOT, 'src', 'ai', 'ml-mlp', filename);
   const raw = JSON.parse(readFileSync(path, 'utf8')) as unknown;
   const weights = parseWeights(raw);
-  return makeMlpAI(weights, 'mlp-v2', `MLP v2 (${weights.version})`);
+  return makeMlpAI(weights, id, `${label} (${weights.version})`);
 }
 
 let mlpV2: AIPlayerInfo | null = null;
@@ -56,7 +57,7 @@ function resolveAi(spec: string): AIPlayerInfo {
   if (spec === 'heuristic') return heuristicAI;
   if (spec === 'mlp') return mlpAI;
   if (spec === 'mlp-v2') {
-    if (!mlpV2) mlpV2 = loadMlpV2();
+    if (!mlpV2) mlpV2 = loadMlpFromPath('weights-v2.json', 'mlp-v2', 'MLP v2');
     return mlpV2;
   }
   if (spec.startsWith('mcts:')) {
@@ -67,6 +68,22 @@ function resolveAi(spec: string): AIPlayerInfo {
       return makeMctsAI({ K, N, seed: Number(parts[3]) });
     }
     return makeMctsAI({ K, N });
+  }
+  if (spec.startsWith('mcts-mlp:')) {
+    // MCTS with mlp-v3 rollouts. Same K/N tuning, but the leaf
+    // evaluator is the registered `mlp` plugin (currently v3) instead
+    // of Heuristic.
+    const parts = spec.split(':');
+    const K = Number(parts[1]);
+    const N = Number(parts[2]);
+    const path = join(REPO_ROOT, 'src', 'ai', 'ml-mlp', 'weights-v3.json');
+    const raw = JSON.parse(readFileSync(path, 'utf8')) as unknown;
+    const weights = parseWeights(raw);
+    const rolloutPolicy = makeMlpRollout(weights);
+    const cfg = parts[3] !== undefined
+      ? { K, N, seed: Number(parts[3]), rolloutPolicy }
+      : { K, N, rolloutPolicy };
+    return makeMctsAI({ ...cfg, displayName: `MCTS+MLP(K=${K},N=${N})` });
   }
   throw new Error(`unknown AI spec: ${spec}`);
 }

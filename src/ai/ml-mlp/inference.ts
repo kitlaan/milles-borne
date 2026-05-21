@@ -6,7 +6,14 @@ import type { Action } from '@/engine/actions';
 import type { SeatView } from '@/engine/view';
 import { decodeActionFromSlot, legalActionMask } from './actions';
 import { encodeFeatures } from './features';
+import { encodeFeaturesV2 } from './features-v2';
 import { forward, type MlpWeights } from './forward';
+
+function encode(weights: MlpWeights, view: SeatView): number[] {
+  return weights.featuresVersion === 2
+    ? encodeFeaturesV2(view)
+    : encodeFeatures(view);
+}
 
 export function chooseActionFromModel(
   weights: MlpWeights,
@@ -18,7 +25,7 @@ export function chooseActionFromModel(
   }
   if (legal.length === 1) return legal[0]!;
 
-  const features = encodeFeatures(view);
+  const features = encode(weights, view);
   const logits = forward(weights, features);
   const mask = legalActionMask(view, legal);
 
